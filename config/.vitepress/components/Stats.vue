@@ -1,99 +1,119 @@
 <template>
-  <div ref="statsContainer" class="stats-grid">
+  <div
+    ref="statsContainer"
+    class="stats-grid"
+  >
     <div class="stat-card">
-      <div class="stat-number">{{ followers.toLocaleString() }}</div>
-      <div class="stat-label">Подписчиков на Twitch</div>
-      <div class="stat-subtitle">@zakvielchannel</div>
+      <div class="stat-number">
+        {{ followers.toLocaleString() }}
+      </div>
+      <div class="stat-label">
+        Подписчики на Twitch
+      </div>
+      <div class="stat-subtitle">
+        @zakvielchannel
+      </div>
     </div>
     <div class="stat-card">
-      <div class="stat-number">{{ guidesCount }}</div>
-      <div class="stat-label">Гайдов</div>
-      <div class="stat-subtitle">Полезные инструкции</div>
+      <div class="stat-number">
+        {{ guidesCount }}
+      </div>
+      <div class="stat-label">
+        Гайды
+      </div>
+      <div class="stat-subtitle">
+        Полезные материалы
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">
+        {{ sborkaCount }}
+      </div>
+      <div class="stat-label">
+        Сборки
+      </div>
+      <div class="stat-subtitle">
+        Страницы сборок
+      </div>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue';
+import { useData } from 'vitepress';
+import { fetchTwitchFollowers } from '../lib/twitch';
+import { animateCounter } from '../lib/animate';
 
-const followers = ref(0) // Начинаем с 0 для анимации
-const guidesCount = ref(0) // Начинаем с 0 для анимации
-const statsContainer = ref(null)
-const isVisible = ref(false)
-const hasAnimated = ref(false)
+const followers = ref(0);
+const guidesCount = ref(0);
+const sborkaCount = ref(0);
+const statsContainer = ref<HTMLElement | null>(null);
+const hasAnimated = ref(false);
+const { site } = useData();
 
-let observer = null
-
-const fetchTwitchData = async () => {
-  try {
-    const response = await fetch('https://api.ivr.fi/v2/twitch/user?login=zakvielchannel')
-    const data = await response.json()
-    
-    if (data && data.followers) {
-      return data.followers
-    }
-  } catch (error) {
-    console.error('Ошибка загрузки данных Twitch:', error)
-  }
-  return 456335 // Fallback значение
-}
-
-const animateCounter = (ref, target, duration = 2000) => {
-  const start = 0
-  const increment = target / (duration / 16)
-  let current = 0
-  
-  const timer = setInterval(() => {
-    current += increment
-    if (current >= target) {
-      ref.value = target
-      clearInterval(timer)
-    } else {
-      ref.value = Math.floor(current)
-    }
-  }, 16)
-}
+let observer: IntersectionObserver | null = null;
+let stopFollowersAnim: (() => void) | null = null;
+let stopGuidesAnim: (() => void) | null = null;
+let stopSborkaAnim: (() => void) | null = null;
 
 const startAnimation = async () => {
-  if (hasAnimated.value) return
-  
-  hasAnimated.value = true
-  const twitchFollowers = await fetchTwitchData()
-  
-  // Анимируем счётчики
-  animateCounter(followers, twitchFollowers, 2000)
-  setTimeout(() => {
-    animateCounter(guidesCount, 1, 1500)
-  }, 500)
-}
+  if (hasAnimated.value) return;
+  hasAnimated.value = true;
+  const loaded = await fetchTwitchFollowers('zakvielchannel');
+  const targetFollowers = loaded ?? 456335;
+  stopFollowersAnim = animateCounter(followers, targetFollowers);
+  // derive counts from theme sidebar (robust in dev/prod)
+  const collectLinks = (sb: any): string[] => {
+    const links: string[] = [];
+    const visit = (arr: any[]) => {
+      for (const it of arr || []) {
+        if (it?.link) links.push(it.link);
+        if (it?.items) visit(it.items);
+      }
+    };
+    if (Array.isArray(sb)) visit(sb);
+    else if (sb && typeof sb === 'object') {
+      for (const k of Object.keys(sb)) visit(sb[k]);
+    }
+    return Array.from(new Set(links));
+  };
+
+  const links = collectLinks((site.value as any)?.themeConfig?.sidebar);
+  const guidesLinks = links.filter(
+    (l) => typeof l === 'string' && l.startsWith('/guides') && l !== '/guides' && l !== '/guides/'
+  );
+  let modpackLinks = links.filter(
+    (l) =>
+      typeof l === 'string' && l.startsWith('/modpacks') && l !== '/modpacks' && l !== '/modpacks/'
+  );
+  if (modpackLinks.length === 0) {
+    // fallback to legacy single pack route
+    modpackLinks = links.filter((l) => typeof l === 'string' && l.startsWith('/sborka'));
+  }
+
+  stopGuidesAnim = animateCounter(guidesCount, guidesLinks.length);
+  stopSborkaAnim = animateCounter(sborkaCount, modpackLinks.length);
+};
 
 onMounted(() => {
-  // Создаём Intersection Observer
   observer = new IntersectionObserver(
     (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting && !hasAnimated.value) {
-          startAnimation()
-        }
-      })
+      for (const entry of entries) {
+        if (entry.isIntersecting) startAnimation();
+      }
     },
-    {
-      threshold: 0.3, // Анимация запустится когда 30% компонента будет видно
-      rootMargin: '0px 0px -50px 0px' // Небольшой отступ снизу
-    }
-  )
-  
-  // Наблюдаем за контейнером
-  if (statsContainer.value) {
-    observer.observe(statsContainer.value)
-  }
-})
+    { threshold: 0.3 }
+  );
+  if (statsContainer.value) observer.observe(statsContainer.value);
+});
 
 onUnmounted(() => {
-  if (observer) {
-    observer.disconnect()
-  }
-})
+  if (observer) observer.disconnect();
+  if (stopFollowersAnim) stopFollowersAnim();
+  if (stopGuidesAnim) stopGuidesAnim();
+  if (stopSborkaAnim) stopSborkaAnim();
+});
 </script>
 
 <style scoped>
@@ -163,17 +183,14 @@ onUnmounted(() => {
   opacity: 0.8;
 }
 
-/* Адаптивность */
 @media (max-width: 768px) {
   .stats-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
   .stat-card {
     padding: 1.5rem 1rem;
   }
-  
   .stat-number {
     font-size: 2.5rem;
   }

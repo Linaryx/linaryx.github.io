@@ -1,7 +1,8 @@
 <template>
   <Layout />
- </template>
+</template>
 
 <script setup>
-import { Layout } from 'vitepress/theme'
+import DefaultTheme from 'vitepress/theme';
+const { Layout } = DefaultTheme;
 </script>

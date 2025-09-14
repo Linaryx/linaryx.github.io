@@ -2,7 +2,7 @@ name: Deploy VitePress to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -36,5 +36,3 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
-
-

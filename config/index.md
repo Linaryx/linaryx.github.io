@@ -2,35 +2,31 @@
 layout: home
 
 hero:
-  name: "Wikyx"
-  text: "Википедия для чата Заквиеля"
-  tagline: "Всё что нужно знать о фишках чата и разных штуках"
-  image:
-    src: /img/logo.webp
-    alt: Wikyx Logo
+  name: 'Wikyx'
+  tagline: 'Всё что можно узнать из чата Заквиеля'
   actions:
     - theme: brand
-      text: "🎮 Текущая сборка"
+      text: '🎮 Текущая сборка'
       link: /sborka
     - theme: alt
-      text: "📚 Гайды"
+      text: '📚 Гайды'
       link: /guides
     - theme: alt
-      text: "🎥 Стримы"
+      text: '🎥 Стримы'
       link: https://www.twitch.tv/zakvielchannel
 
 features:
   - icon: 🎮
-    title: "Игровые сборки"
-    details: "Актуальные модпаки и инструкции по установке"
+    title: 'Игровые сборки'
+    details: 'Актуальные модпаки и инструкции по установке'
     link: /sborka
   - icon: 📖
-    title: "Гайды и инструкции"
-    details: "Полезные советы для чата и стримов"
+    title: 'Гайды и инструкции'
+    details: 'Полезные советы для чата и стримов'
     link: /guides
   - icon: ⚙
-    title: "Механизмы"
-    details: "Схематики и нужные ссылки"
+    title: 'Механизмы'
+    details: 'Схематики и нужные ссылки'
 ---
 
 ## 📊 Статистика

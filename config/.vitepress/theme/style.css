@@ -1,11 +1,4 @@
-/**
- * Кастомные стили для VitePress
- * Customize default theme styling by overriding CSS variables:
- * https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/vars.css
- */
-
-/* Используем шрифт Montserrat из Google Fonts (см. head в config.mts) и локальный Bounded для заголовков */
-@font-face {
+﻿@font-face {
   font-family: 'Bounded';
   src: url('/fonts/Bounded-Variable.ttf') format('truetype');
   font-weight: 100 900;
@@ -13,65 +6,21 @@
   font-display: swap;
 }
 
-/**
- * Colors
- *
- * Each colors have exact same color scale system with 3 levels of solid
- * colors with different brightness, and 1 soft color.
- * 
- * - `XXX-1`: The most solid color used mainly for colored text. It must
- *   satisfy the contrast ratio against when used on top of `XXX-soft`.
- *
- * - `XXX-2`: The color used mainly for hover state of the button.
- *
- * - `XXX-3`: The color for solid background, such as bg color of the button.
- *   It must satisfy the contrast ratio with pure white (#ffffff) text on
- *   top of it.
- *
- * - `XXX-soft`: The color used for subtle background such as custom container
- *   or badges. It must satisfy the contrast ratio when putting `XXX-1` colors
- *   on top of it.
- *
- *   The soft color must be semi transparent alpha channel. This is crucial
- *   because it allows adding multiple "soft" colors on top of each other
- *   to create a accent, such as when having inline code block inside
- *   custom containers.
- *
- * - `default`: The color used purely for subtle indication without any
- *   special meanings attched to it such as bg color for menu hover state.
- *
- * - `brand`: Used for primary brand colors, such as link text, button with
- *   brand theme, etc.
- *
- * - `tip`: Used to indicate useful information. The default theme uses the
- *   brand color for this by default.
- *
- * - `warning`: Used to indicate warning to the users. Used in custom
- *   container, badges, etc.
- *
- * - `danger`: Used to indicate dangerous message to the users. Used in custom
- *   container, badges, etc.
- * -------------------------------------------------------------------------- */
-
 :root {
-  /* Шрифты - используем Montserrat */
   --vp-font-family-base: 'Montserrat', sans-serif;
-  --vp-font-family-mono: 'Montserrat', monospace; /* Используем Montserrat вместо Fira Code */
-  
-  /* Брендинг - фиолетово-синяя схема */
+  --vp-font-family-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  --vp-nav-logo-height: 28px;
+
   --vp-c-brand-1: #8b5cf6;
   --vp-c-brand-2: #a78bfa;
   --vp-c-brand-3: #7c3aed;
   --vp-c-brand-soft: rgba(139, 92, 246, 0.15);
-  
-  /* Кастомные переменные */
+
   --vp-home-hero-name-color: transparent;
   --vp-home-hero-name-background: -webkit-linear-gradient(120deg, #8b5cf6 30%, #3b82f6);
 }
-
-/**
- * Component: Button
- * -------------------------------------------------------------------------- */
 
 :root {
   --vp-button-brand-border: transparent;
@@ -84,10 +33,6 @@
   --vp-button-brand-active-text: var(--vp-c-white);
   --vp-button-brand-active-bg: var(--vp-c-brand-1);
 }
-
-/**
- * Component: Home
- * -------------------------------------------------------------------------- */
 
 :root {
   --vp-home-hero-name-color: transparent;
@@ -109,10 +54,6 @@
   }
 }
 
-/**
- * Component: Custom Block
- * -------------------------------------------------------------------------- */
-
 :root {
   --vp-custom-block-tip-border: transparent;
   --vp-custom-block-tip-text: var(--vp-c-text-1);
@@ -120,64 +61,61 @@
   --vp-custom-block-tip-code-bg: var(--vp-c-brand-soft);
 }
 
-/**
- * Component: Algolia
- * -------------------------------------------------------------------------- */
-
 .DocSearch {
   --docsearch-primary-color: var(--vp-c-brand-1) !important;
 }
 
-/* Кастомные стили для заголовков */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: 'Bounded', 'Montserrat', sans-serif;
-  font-weight: 700 !important; /* Принудительно устанавливаем bold */
+  font-weight: 700 !important;
 }
 
-/* Отдельные настройки для разных уровней заголовков */
 h1 {
-  font-weight: 900 !important; /* Black */
+  font-weight: 900 !important;
 }
 
 h2 {
-  font-weight: 800 !important; /* ExtraBold */
+  font-weight: 800 !important;
 }
 
 h3 {
-  font-weight: 700 !important; /* Bold */
+  font-weight: 700 !important;
 }
 
 h4 {
-  font-weight: 600 !important; /* DemiBold */
+  font-weight: 600 !important;
 }
 
 h5 {
-  font-weight: 500 !important; /* Medium */
+  font-weight: 500 !important;
   font-size: 0.9em;
 }
 
 h6 {
-  font-weight: 400 !important; /* Regular */
+  font-weight: 400 !important;
   font-size: 0.85em;
   opacity: 0.8;
 }
 
-/* Обеспечиваем использование Montserrat */
-body, 
+body,
 .vp-doc,
 .vp-nav,
 .vp-sidebar,
-p, 
-span, 
-div, 
-a, 
+p,
+span,
+div,
+a,
 button,
 input,
 textarea {
   font-family: 'Montserrat', sans-serif !important;
 }
 
-/* Код блоки - используем Montserrat вместо моноширинных шрифтов */
 code,
 pre,
 .vp-code,
@@ -190,14 +128,10 @@ pre,
   font-weight: 500;
 }
 
-/* Переопределяем все возможные шрифтовые стеки */
 * {
   font-family: inherit;
 }
 
-/* Дополнительные кастомные стили */
-
-/* Стили для карточек на главной странице */
 .video-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -250,7 +184,6 @@ pre,
   line-height: 1.6;
 }
 
-/* Улучшенные стили для списков */
 .vp-doc ul li {
   margin: 0.5rem 0;
 }
@@ -259,7 +192,6 @@ pre,
   color: var(--vp-c-brand-1);
 }
 
-/* Стили для таблиц */
 .vp-doc table {
   border-radius: 8px;
   overflow: hidden;
@@ -276,7 +208,6 @@ pre,
   background: var(--vp-c-bg-soft);
 }
 
-/* Кастомные блоки */
 .custom-info {
   background: linear-gradient(135deg, var(--vp-c-brand-soft) 0%, transparent 100%);
   border-left: 4px solid var(--vp-c-brand-1);
@@ -293,13 +224,11 @@ pre,
   margin: 1rem 0;
 }
 
-/* Стили для эмодзи */
 .emoji {
   font-size: 1.2em;
   margin-right: 0.5rem;
 }
 
-/* Анимация для кнопок */
 .vp-button {
   transition: all 0.3s ease;
 }
@@ -309,7 +238,6 @@ pre,
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-/* Улучшенные ссылки */
 .vp-doc a {
   text-decoration: none;
   border-bottom: 2px solid transparent;
@@ -320,19 +248,17 @@ pre,
   border-bottom-color: var(--vp-c-brand-1);
 }
 
-/* Респонсивность */
 @media (max-width: 768px) {
   .video-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .video-card {
     padding: 1rem;
   }
 }
 
-/* Дополнительные классы шрифта (Montserrat) с разными весами */
 .tt-font-light,
 .vp-doc .tt-font-light,
 div.tt-font-light {
@@ -368,63 +294,59 @@ div.tt-font-black {
   font-weight: 900 !important;
 }
 
-/* Проверка шрифта - этот класс поможет протестировать шрифт */
 .font-test {
   font-family: 'Montserrat', sans-serif !important;
   font-size: 2em;
   line-height: 1.2;
 }
 
-.font-test-100 { 
+.font-test-100 {
   font-family: 'Montserrat', sans-serif !important;
-  font-weight: 100 !important; 
+  font-weight: 100 !important;
 }
-.font-test-200 { 
+.font-test-200 {
   font-family: 'Montserrat', sans-serif !important;
-  font-weight: 200 !important; 
+  font-weight: 200 !important;
 }
-.font-test-300 { 
+.font-test-300 {
   font-family: 'Montserrat', sans-serif !important;
-  font-weight: 300 !important; 
+  font-weight: 300 !important;
 }
-.font-test-400 { 
+.font-test-400 {
   font-family: 'Montserrat', sans-serif !important;
-  font-weight: 400 !important; 
+  font-weight: 400 !important;
 }
-.font-test-500 { 
+.font-test-500 {
   font-family: 'Montserrat', sans-serif !important;
-  font-weight: 500 !important; 
+  font-weight: 500 !important;
 }
-.font-test-600 { 
+.font-test-600 {
   font-family: 'Montserrat', sans-serif !important;
-  font-weight: 600 !important; 
+  font-weight: 600 !important;
 }
-.font-test-700 { 
+.font-test-700 {
   font-family: 'Montserrat', sans-serif !important;
-  font-weight: 700 !important; 
+  font-weight: 700 !important;
 }
-.font-test-800 { 
+.font-test-800 {
   font-family: 'Montserrat', sans-serif !important;
-  font-weight: 800 !important; 
+  font-weight: 800 !important;
 }
-.font-test-900 { 
+.font-test-900 {
   font-family: 'Montserrat', sans-serif !important;
-  font-weight: 900 !important; 
+  font-weight: 900 !important;
 }
 
-/* Дополнительные правила для принудительного применения TT Travels Next Trial */
 .font-test div,
 .font-test > div,
-.font-test [class*="font-test-"] {
+.font-test [class*='font-test-'] {
   font-family: 'Montserrat', sans-serif !important;
 }
 
-/* Переопределяем любые Montserrat в тестовой секции */
 .font-test * {
   font-family: inherit !important;
 }
 
-/* Дополнительные правила для принудительного применения шрифта */
 .vp-doc h1,
 .vp-doc h2,
 .vp-doc h3,
@@ -436,7 +358,6 @@ div.tt-font-black {
   font-family: 'Bounded', 'Montserrat', sans-serif !important;
 }
 
-/* Увеличиваем размер логотипа в hero-секции */
 .VPHero .image {
   width: 120px !important;
   height: 120px !important;
@@ -452,7 +373,6 @@ div.tt-font-black {
   box-shadow: none !important;
 }
 
-/* Убираем фоновый элемент за логотипом */
 .VPHero .image::before {
   display: none !important;
 }
@@ -461,9 +381,50 @@ div.tt-font-black {
   display: none !important;
 }
 
+.VPNavBarTitle {
+  width: auto !important;
+  height: auto !important;
+  position: static !important;
+  top: auto !important;
+  transform: none !important;
+}
 
+.VPNavBarTitle a:hover {
+  transform: none !important;
+}
 
-/* Кастомизация логотипа в шапке - только иконка */
+.VPNavBarTitle .title,
+.VPNavBarTitle .site-name,
+.VPNavBarTitle .site-title,
+.VPNavBarTitle .brand,
+.VPNavBarTitle .logo-text,
+.VPNavBarTitle .text,
+.VPNavBarTitle .name,
+.VPNavBarTitle span {
+  display: inline-flex !important;
+  font-size: inherit !important;
+  color: inherit !important;
+  text-indent: 0 !important;
+  overflow: visible !important;
+}
+
+.theme-wave {
+  animation: theme-wave-expand 700ms ease-out forwards;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+@keyframes theme-wave-expand {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.45;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.2);
+    opacity: 0;
+  }
+}
+
 .VPNavBarTitle {
   display: flex !important;
   align-items: center;
@@ -475,27 +436,10 @@ div.tt-font-black {
   transform: translateY(-50%) !important;
 }
 
-.VPNavBarTitle a {
-  display: block !important;
-  width: 32px !important;
-  height: 32px !important;
-  background-image: url('/favicon.ico') !important;
-  background-size: 32px 32px !important;
-  background-repeat: no-repeat !important;
-  background-position: center !important;
-  border-radius: 6px !important;
-  transition: all 0.3s ease !important;
-  cursor: pointer !important;
-  text-indent: -9999px !important;
-  overflow: hidden !important;
-  text-decoration: none !important;
-}
-
 .VPNavBarTitle a:hover {
   transform: rotate(5deg) scale(1.1) !important;
 }
 
-/* Скрываем текст логотипа */
 .VPNavBarTitle .title,
 .VPNavBarTitle .site-name,
 .VPNavBarTitle .site-title,
@@ -511,7 +455,6 @@ div.tt-font-black {
   overflow: hidden !important;
 }
 
-/* Альтернативные селекторы для логотипа */
 .VPNavBar .VPNavBarTitle,
 .VPNavBar .VPNavBarTitle a,
 .VPNavBar .VPNavBarTitle .title {
@@ -520,20 +463,7 @@ div.tt-font-black {
   justify-content: center;
 }
 
-.VPNavBar .VPNavBarTitle a {
-  background-image: url('/favicon.ico') !important;
-  background-size: 32px 32px !important;
-  background-repeat: no-repeat !important;
-  background-position: center !important;
-  width: 32px !important;
-  height: 32px !important;
-  border-radius: 6px !important;
-  text-indent: -9999px !important;
-  overflow: hidden !important;
-}
-
-/* Скрываем заголовки у кастомных блоков */
-.vp-doc .custom-block .custom-block-title {
+.VPNavBar .vp-doc .custom-block .custom-block-title {
   display: none !important;
 }
 
@@ -544,7 +474,6 @@ div.tt-font-black {
   display: none !important;
 }
 
-/* Стили для быстрых ссылок */
 .quick-links {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -609,23 +538,183 @@ div.tt-font-black {
   line-height: 1.4;
 }
 
-/* Адаптивность для быстрых ссылок */
 @media (max-width: 768px) {
   .quick-links {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .quick-link {
     padding: 1.5rem 1rem;
   }
-  
+
   .quick-link .emoji {
     font-size: 2.5rem;
   }
-  
+
   .quick-link .text {
     font-size: 1.1rem;
   }
 }
 
+.VPNavBar .VPNavBarTitle {
+  display: inline-flex !important;
+  align-items: center !important;
+  transform: none !important;
+  width: auto !important;
+  height: auto !important;
+  font-size: 1rem !important;
+}
+
+.VPNavBar .VPNavBarTitle span,
+.VPNavBar .VPNavBarTitle .custom-logo,
+.VPNavBar .VPNavBarTitle .custom-logo * {
+  display: inline-flex !important;
+  text-indent: 0 !important;
+  font-size: 1rem !important;
+  color: inherit !important;
+  visibility: visible !important;
+  line-height: 1 !important;
+}
+
+.VPNavBar .VPNavBarTitle * {
+  line-height: 1 !important;
+}
+
+.VPNavBar .VPNavBarTitle .logo-text {
+  display: none !important;
+}
+.VPNavBar .VPNavBarTitle .logo-icon-wrap {
+  width: 28px !important;
+  height: 28px !important;
+}
+.VPNavBar .VPNavBarTitle .logo-icon {
+  width: 28px !important;
+  height: 28px !important;
+}
+
+.VPNavBar .VPNavBarTitle a:hover .logo-icon {
+  transform: rotate(8deg) scale(1.08) !important;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.18));
+}
+.VPNavBar .VPNavBarTitle a:hover :is(.logo, .VPImage, img) {
+  transform: rotate(8deg) scale(1.08);
+  transition: transform 200ms ease;
+}
+.VPNavBar .VPNavBarTitle a:active {
+  transform: scale(0.98) !important;
+}
+.VPNavBar .VPNavBarTitle a:focus-visible {
+  outline: 2px solid var(--vp-c-brand-2);
+  outline-offset: 2px;
+}
+
+.VPNavBar .container {
+  display: flex !important;
+  align-items: center !important;
+}
+.VPNavBar .title {
+  display: flex !important;
+  align-items: center !important;
+  margin-left: 0 !important;
+}
+.VPNavBar .VPNavBarTitle .title {
+  border: 0 !important;
+}
+.VPNavBar .VPNavBarTitle {
+  align-self: center !important;
+}
+
+.VPHero {
+  position: relative;
+  overflow: hidden;
+}
+
+.VPHero::before {
+  content: '';
+  position: absolute;
+  left: 30%;
+  top: 50%;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(139, 92, 246, 0.6) 0%,
+    rgba(59, 130, 246, 0.5) 60%,
+    transparent 85%
+  );
+  filter: blur(45px);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.VPHero .container,
+.VPHero .main,
+.VPHero .name,
+.VPHero .text,
+.VPHero .actions {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 640px) {
+  .VPHero::before {
+    left: 55%;
+    top: 28%;
+    width: 380px;
+    height: 380px;
+    filter: blur(30px);
+    opacity: 0.75;
+  }
+}
+
+:root {
+  --vp-nav-logo-height: 28px;
+}
+
+.VPNavBar .VPNavBarTitle {
+  margin: 0 !important;
+}
+
+.VPNavBar .VPNavBarTitle {
+  position: static !important;
+  top: auto !important;
+  transform: none !important;
+  height: var(--vp-nav-height) !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.VPNavBar .VPNavBarTitle .title {
+  display: flex !important;
+  align-items: center !important;
+  height: var(--vp-nav-height) !important;
+  padding: 0 !important;
+  width: auto !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.VPNavBar .VPNavBarTitle.has-sidebar .title {
+  border: 0 !important;
+}
+
+.VPNavBar .VPNavBarTitle .title > :is(.logo, .VPImage, img) {
+  height: var(--vp-nav-logo-height) !important;
+  width: auto;
+  transition: transform 200ms ease;
+
+  margin-top: 0;
+}
+.VPNavBar .VPNavBarTitle,
+.VPNavBar .VPNavBarTitle .title {
+  display: flex !important;
+  align-items: center !important;
+  height: var(--vp-nav-height) !important;
+}
+
+.VPNavBar .VPNavBarTitle .title:hover > :is(.logo, .VPImage, img) {
+  transform: rotate(6deg) scale(1.06);
+}

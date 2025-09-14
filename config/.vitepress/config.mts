@@ -1,19 +1,19 @@
-import { defineConfig } from 'vitepress'
+﻿import { defineConfig } from 'vitepress';
 
-// https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "Wikyx - вики чата",
+  title: 'Wikyx - вики чата',
   base: '/',
-  description: "Википедия чата Заквиеля",
+  description: 'Википедия чата Заквиеля',
   cleanUrls: true,
-  
+
   themeConfig: {
-    siteTitle: 'Wikyx - вики чата',
-    
+    siteTitle: false,
+    logo: '/favicon.ico',
+
     nav: [
       { text: 'Главная', link: '/' },
       { text: 'Сборка', link: '/sborka' },
-      { text: 'Гайды', link: '/guides' }
+      { text: 'Гайды', link: '/guides' },
     ],
 
     sidebar: {
@@ -22,36 +22,38 @@ export default defineConfig({
           text: 'Гайды',
           items: [
             { text: 'Оглавление', link: '/guides' },
-            { text: 'Как включить смайлы на Twitch', link: '/emotesGuide' }
-          ]
+            { text: 'Как включить смайлы на Twitch', link: '/guides/emotesGuide' },
+          ],
         },
         {
           text: 'Сборка',
-          items: [
-            { text: 'Fear Nightfall v1.1.3', link: '/sborka' }
-          ]
-        }
-      ]
+          items: [{ text: 'Fear Nightfall v1.1.3', link: '/sborka' }],
+        },
+      ],
     },
 
     socialLinks: [
       { icon: 'youtube', link: 'https://www.youtube.com/@zakvielchannel' },
       { icon: 'twitch', link: 'https://www.twitch.tv/zakvielchannel' },
-      { icon: 'telegram', link: 'https://t.me/zakvielchannel' }
+      { icon: 'telegram', link: 'https://t.me/zakvielchannel' },
     ],
 
     footer: {
       message: 'Linaryx dev',
-      copyright: 'Copyright © 2025'
-    }
+      copyright: 'Copyright © 2025',
+    },
   },
 
-  // Настройки для кастомных шрифтов и SEO
   head: [
     ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
-    ['link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap' }],
-    // Убрали Geist, заголовки рендерим локальным Bounded
+    [
+      'link',
+      {
+        rel: 'stylesheet',
+        href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap',
+      },
+    ],
     ['meta', { name: 'theme-color', content: '#646cff' }],
     ['meta', { name: 'og:type', content: 'website' }],
     ['meta', { name: 'og:locale', content: 'ru_RU' }],
@@ -61,18 +63,27 @@ export default defineConfig({
     ['meta', { name: 'og:url', content: 'https://zakviel.wiki/' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
     ['meta', { name: 'twitter:title', content: 'Заквиель - Стример и Ютубер' }],
-    ['meta', { name: 'twitter:description', content: 'Спидранит всё, начиная с игр и заканчивая сквадами на твиче. Снимает интересные видео по майнкрафту и стримит на Twitch и YouTube' }],
-    ['meta', { name: 'keywords', content: 'заквиель, zakviel, стример, ютубер, майнкрафт, спидран, twitch, youtube, игры' }],
+    [
+      'meta',
+      {
+        name: 'twitter:description',
+        content:
+          'Спидранит всё, начиная с игр и заканчивая сквадами на твиче. Снимает интересные видео по майнкрафту и стримит на Twitch и YouTube',
+      },
+    ],
+    [
+      'meta',
+      {
+        name: 'keywords',
+        content: 'заквиель, zakviel, стример, ютубер, майнкрафт, спидран, twitch, youtube, игры',
+      },
+    ],
     ['link', { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
     ['link', { rel: 'shortcut icon', type: 'image/x-icon', href: '/favicon.ico' }],
-    ['link', { rel: 'apple-touch-icon', href: '/favicon.ico' }]
+    ['link', { rel: 'apple-touch-icon', href: '/favicon.ico' }],
   ],
 
-  // Настройки генерации сайтмапы
   sitemap: {
-    hostname: 'https://zakviel.wiki'
-  }
-  
-  // Примечание: Предупреждение о Inter шрифте - это нормально,
-  // так как мы используем кастомные шрифты вместо стандартного Inter
-})
+    hostname: 'https://zakviel.wiki',
+  },
+});
