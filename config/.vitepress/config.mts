@@ -57,12 +57,12 @@ export default defineConfig({
     ['meta', { name: 'theme-color', content: '#646cff' }],
     ['meta', { name: 'og:type', content: 'website' }],
     ['meta', { name: 'og:locale', content: 'ru_RU' }],
-    ['meta', { name: 'og:title', content: 'Заквиель - Стример и Ютубер' }],
-    ['meta', { name: 'og:site_name', content: 'Заквиель Wiki' }],
+    ['meta', { name: 'og:title', content: 'Wikyx - вики для чата' }],
+    ['meta', { name: 'og:site_name', content: 'Wikyx' }],
     ['meta', { name: 'og:image', content: '/img/logo.webp' }],
     ['meta', { name: 'og:url', content: 'https://zakviel.wiki/' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
-    ['meta', { name: 'twitter:title', content: 'Заквиель - Стример и Ютубер' }],
+    ['meta', { name: 'twitter:title', content: 'Wikyx - вики для чата' }],
     [
       'meta',
       {
@@ -75,7 +75,7 @@ export default defineConfig({
       'meta',
       {
         name: 'keywords',
-        content: 'заквиель, zakviel, стример, ютубер, майнкрафт, спидран, twitch, youtube, игры',
+        content: 'заквиель, zakviel, стример, ютубер, майнкрафт, спидран, twitch, youtube, игры, гайды, вики, википедия',
       },
     ],
     ['link', { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
