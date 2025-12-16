@@ -1,0 +1,626 @@
+<script setup lang="ts">
+import { computed, reactive, ref, watch } from 'vue';
+import TierControls from '~/components/chat-tiers/TierControls.vue';
+import TierSummary from '~/components/chat-tiers/TierSummary.vue';
+import TierTable from '~/components/chat-tiers/TierTable.vue';
+import UserCard from '~/components/chat-tiers/UserCard.vue';
+import LoadingBar from '~/components/chat-tiers/LoadingBar.vue';
+import { useRoles } from '~/composables/useRoles';
+import { defaultTierColors, tierRanges } from '~/constants/tiers';
+import { fetchTiersSupabase as fetchTiers } from '~/lib/api';
+import type { Mode, Scope, TierEntry, TierResponse } from '~/types/tiers';
+
+const channel = ref('zakvielchannel');
+const year = ref(new Date().getFullYear());
+const month = ref(new Date().getMonth() + 1);
+const day = ref(new Date().getDate());
+const scope = ref<Scope>('month');
+const mode = ref<Mode>('online');
+
+type IvrUser = {
+  id: string;
+  login: string;
+  displayName: string;
+  logo?: string;
+  followers?: number | null;
+  createdAt?: string;
+  roles?: { isAffiliate?: boolean; isPartner?: boolean; isStaff?: boolean | null };
+};
+
+type Relation = { followedAt?: string; subMonths?: number; subEnd?: string };
+const profiles = reactive<Record<string, { displayName: string; login: string; logo?: string }>>({});
+const relations = reactive<Record<string, Relation>>({});
+const userLookup = ref('');
+const userData = ref<IvrUser | null>(null);
+const userLoading = ref(false);
+const userError = ref<string | null>(null);
+const showProfile = ref(false);
+
+const tierColors = reactive<Record<string, string>>({ ...defaultTierColors });
+const prefetchIndex = ref(0);
+const tableRef = ref<{ wrapEl: HTMLElement | null; sentinelEl: HTMLElement | null } | null>(null);
+let prefetchObserver: IntersectionObserver | null = null;
+let scrollEl: HTMLElement | null = null;
+let isPrefetching = false;
+
+const { loadRoles, avatarClasses } = useRoles();
+
+const plural = (n: number, forms: [string, string, string]) => {
+  const abs = Math.abs(n) % 100;
+  const d = abs % 10;
+  if (abs > 10 && abs < 20) return forms[2];
+  if (d > 1 && d < 5) return forms[1];
+  if (d === 1) return forms[0];
+  return forms[2];
+};
+
+const humanizeFromDate = (iso?: string) => {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '-';
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const days = Math.max(0, Math.floor(diffMs / 86400000));
+  const years = Math.floor(days / 365);
+  const months = Math.floor((days % 365) / 30);
+  const parts: string[] = [];
+  if (years) parts.push(`${years} ${plural(years, ['год', 'года', 'лет'])}`);
+  if (months) parts.push(`${months} ${plural(months, ['месяц', 'месяца', 'месяцев'])}`);
+  if (!parts.length) parts.push('меньше месяца');
+  return `${d.toLocaleDateString('ru-RU')} · ${parts.join(' ')} назад`;
+};
+
+const humanizeMonths = (months?: number) => {
+  if (months == null) return '-';
+  const y = Math.floor(months / 12);
+  const m = months % 12;
+  const parts: string[] = [];
+  if (y) parts.push(`${y} ${plural(y, ['год', 'года', 'лет'])}`);
+  if (m) parts.push(`${m} ${plural(m, ['месяц', 'месяца', 'месяцев'])}`);
+  const base = parts.length ? parts.join(' ') : `${months} мес`;
+  return `${months} мес (${base})`;
+};
+const formatHours = (count: number, minutes: number) => {
+  const hours = (count * minutes) / 60;
+  return `${hours.toFixed(1)}h`;
+};
+
+const fetchProfiles = async (ids: string[]) => {
+  if (!ids.length) return;
+  const uniq = ids.filter((id) => !profiles[id]);
+  if (!uniq.length) return;
+  const chunkSize = 25;
+  for (let i = 0; i < uniq.length; i += chunkSize) {
+    const chunk = uniq.slice(i, i + chunkSize);
+    try {
+      const res = await $fetch<IvrUser[]>(`https://api.ivr.fi/v2/twitch/user?id=${chunk.join(',')}`);
+      res.forEach((u) => {
+        profiles[u.id] = { displayName: u.displayName, login: u.login, logo: u.logo };
+      });
+    } catch {
+      /* ignore */
+    }
+  }
+};
+
+const fetchRelations = async (ids: string[]) => {
+  if (!ids.length) return;
+  const channelLogin = channel.value.trim();
+  const top = ids.slice(0, 30);
+  for (const id of top) {
+    const prof = profiles[id];
+    if (!prof || relations[id]) continue;
+    try {
+      const res: any = await $fetch(
+        `https://api.ivr.fi/v2/twitch/subage/${prof.login}/${channelLogin}`
+      );
+      relations[id] = {
+        followedAt: res?.followedAt || undefined,
+        subMonths: res?.cumulative?.months ?? undefined,
+        subEnd: res?.cumulative?.end || undefined,
+      };
+    } catch {
+      relations[id] = {};
+    }
+  }
+};
+
+const fetchUser = async () => {
+  userError.value = null;
+  userData.value = null;
+  showProfile.value = false;
+  const term = userLookup.value.trim();
+  if (!term) return;
+  userLoading.value = true;
+  try {
+    const isId = /^\d+$/.test(term);
+    const primaryUrl = isId
+      ? `https://api.ivr.fi/v2/twitch/user?id=${encodeURIComponent(term)}`
+      : `https://api.ivr.fi/v2/twitch/user?login=${encodeURIComponent(term)}`;
+    let res = await $fetch<IvrUser[]>(primaryUrl);
+    if ((!res || !res.length) && !isId) {
+      // try as id if login lookup failed
+      res = await $fetch<IvrUser[]>(`https://api.ivr.fi/v2/twitch/user?id=${encodeURIComponent(term)}`);
+    }
+    userData.value = res?.[0] ?? null;
+    if (!res?.length) {
+      userError.value = 'Not found';
+      showProfile.value = false;
+    } else {
+      showProfile.value = true;
+      const foundId = res[0]?.id;
+      if (foundId) {
+        profiles[foundId] = {
+          displayName: res[0]?.displayName || res[0]?.login || foundId,
+          login: res[0]?.login || foundId,
+          logo: res[0]?.logo,
+        };
+      }
+      const rel = foundId ? relations[foundId] : null;
+      const needsRelations = foundId && (!rel || (!rel.followedAt && rel.subMonths == null));
+      if (foundId && needsRelations) {
+        await fetchRelations([foundId]);
+      }
+    }
+  } catch (e: unknown) {
+    const msg =
+      typeof e === 'object' && e && 'message' in e && (e as any).message
+        ? String((e as any).message)
+        : 'Request failed';
+    userError.value = msg;
+    showProfile.value = false;
+  } finally {
+    userLoading.value = false;
+  }
+};
+
+const openProfile = async (userId: string) => {
+  userLookup.value = userId;
+  // быстрый фоллбек из текущего списка
+  const entry = data.value?.entries.find((e: TierEntry) => e.userId === userId);
+  const prof = profiles[userId];
+  if (entry) {
+    profiles[userId] = {
+      displayName: prof?.displayName || entry.userLogin || userId,
+      login: prof?.login || entry.userLogin || userId,
+      logo: prof?.logo,
+    };
+    userData.value = {
+      id: userId,
+      login: entry.userLogin || userId,
+      displayName: prof?.displayName || entry.userLogin || userId,
+      logo: prof?.logo,
+    };
+    showProfile.value = true;
+  }
+  const rel = relations[userId];
+  const needsRelations = !rel || (!rel.followedAt && rel.subMonths == null);
+  if (needsRelations) {
+    await fetchRelations([userId]);
+  }
+  await fetchUser();
+};
+
+const data = ref<TierResponse | null>(null);
+const pending = ref(false);
+const error = ref<unknown>(null);
+const loadingNote = ref('');
+const elapsedMs = ref(0);
+let timer: ReturnType<typeof setInterval> | null = null;
+
+const clearTimer = () => {
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
+};
+
+const loadTiers = async () => {
+  pending.value = true;
+  error.value = null;
+  loadingNote.value = 'Готовим запрос...';
+  elapsedMs.value = 0;
+  clearTimer();
+  const started = Date.now();
+  timer = setInterval(() => {
+    elapsedMs.value = Date.now() - started;
+  }, 120);
+  try {
+    data.value = await fetchTiers({
+      channel: channel.value,
+      scope: scope.value,
+      year: year.value,
+      month: month.value,
+      day: day.value,
+      mode: mode.value
+    });
+    prefetchIndex.value = 0;
+    await prefetchMoreProfiles();
+    loadingNote.value = `Готово за ${elapsedMs.value} ms`;
+  } catch (e: unknown) {
+    error.value = e;
+    loadingNote.value = 'Ошибка запроса';
+  } finally {
+    clearTimer();
+    pending.value = false;
+  }
+};
+
+watch(
+  () => data.value?.entries,
+  async (entries: TierEntry[] | undefined) => {
+    if (!entries) return;
+    const topIds = entries.slice(0, 50).map((e) => e.userId);
+    await fetchProfiles(topIds);
+    await fetchRelations(topIds);
+    setupPrefetchObserver();
+  },
+  { immediate: true }
+);
+
+const reload = async () => {
+  await loadRoles(channel.value);
+  await loadTiers();
+};
+
+const prefetchMoreProfiles = async () => {
+  if (isPrefetching) return;
+  if (!data.value?.entries?.length) return;
+  const entries = data.value.entries;
+  const start = 50 + prefetchIndex.value * 25;
+  if (start >= entries.length) return;
+  isPrefetching = true;
+  const slice = entries.slice(start, start + 25).map((e) => e.userId);
+  await fetchProfiles(slice);
+  prefetchIndex.value += 1;
+  isPrefetching = false;
+};
+
+const setupPrefetchObserver = () => {
+  const wrap = tableRef.value?.wrapEl;
+  const sentinel = tableRef.value?.sentinelEl;
+  scrollEl = wrap || null;
+  if (!wrap || !sentinel) return;
+  if (prefetchObserver) {
+    prefetchObserver.disconnect();
+  }
+  const handleIntersect: IntersectionObserverCallback = (entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        prefetchMoreProfiles();
+      }
+    });
+  };
+  prefetchObserver = new IntersectionObserver(handleIntersect, {
+    root: wrap,
+    threshold: 0.3,
+  });
+  prefetchObserver.observe(sentinel);
+
+  wrap.removeEventListener('scroll', handleScroll, { passive: true } as any);
+  wrap.addEventListener('scroll', handleScroll, { passive: true });
+};
+
+const handleScroll = () => {
+  if (!scrollEl) return;
+  const maxScroll = (scrollEl.scrollHeight - scrollEl.clientHeight) || 1;
+  const progress = Math.min(1, scrollEl.scrollTop / maxScroll);
+  if (progress > 0.7) {
+    prefetchMoreProfiles();
+  }
+};
+
+onMounted(() => {
+  setupPrefetchObserver();
+});
+
+onBeforeUnmount(() => {
+  if (prefetchObserver) {
+    prefetchObserver.disconnect();
+  }
+  if (scrollEl) {
+    scrollEl.removeEventListener('scroll', handleScroll);
+  }
+});
+
+const periodText = computed(() => {
+  if (!data.value) return '';
+  const { year: y, month: m, day: d } = data.value;
+  return [y, m, d].filter(Boolean).join('/');
+});
+
+const selectedEntry = computed(() => {
+  if (!data.value || !userData.value) return null;
+  return data.value.entries.find((e: TierEntry) => e.userId === userData.value?.id) || null;
+});
+
+const selectedRank = computed(() => {
+  if (!data.value || !userData.value) return null;
+  const idx = data.value.entries.findIndex((e) => e.userId === userData.value?.id);
+  return idx >= 0 ? idx : null;
+});
+
+const displayNameLine = computed(() => {
+  if (!userData.value) return '';
+  const { displayName, login } = userData.value;
+  if (!displayName || !login) return displayName || login || '';
+  if (displayName.toLowerCase() === login.toLowerCase()) return displayName;
+  return `${displayName} (${login})`;
+});
+
+const errorText = computed(() => {
+  const val = error.value;
+  if (!val) return '';
+  if (typeof val === 'string') return val;
+  if (typeof val === 'object' && 'message' in val && val?.message) {
+    return String((val as any).message);
+  }
+  return String(val);
+});
+</script>
+
+<template>
+  <main class="page">
+    <header class="header">
+      <div>
+        <h1>Тиры чата</h1>
+        <p class="muted">
+          Подгружаем данные из rustlog tiers: online / offline / all.
+        </p>
+      </div>
+      <button class="btn primary refresh-btn" @click="reload">Обновить</button>
+    </header>
+
+    <TierControls
+      :channel="channel"
+      :scope="scope"
+      :year="year"
+      :month="month"
+      :day="day"
+      :mode="mode"
+      @update:channel="channel = $event"
+      @update:scope="scope = $event"
+      @update:year="year = $event"
+      @update:month="month = $event"
+      @update:day="day = $event"
+      @update:mode="mode = $event"
+      @reload="reload"
+    />
+
+    <section class="card">
+      <div class="lookup">
+        <div class="lookup-row">
+          <input v-model="userLookup" type="text" placeholder="login or id" />
+          <button class="btn primary" @click="fetchUser" :disabled="userLoading">
+            {{ userLoading ? 'Загрузка...' : 'Поиск' }}
+          </button>
+        </div>
+        <p v-if="userError" class="error-text">Ошибка: {{ userError }}</p>
+        <div v-if="userData && !showProfile" class="profile-mini">
+          <span class="value">{{ userData.displayName }}</span>
+          <button class="btn secondary" @click="showProfile = true">Карточка</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card error" v-if="error">
+      <p>Ошибка: {{ errorText }}</p>
+    </section>
+
+    <LoadingBar
+      v-if="pending"
+      :label="`${channel} / ${scope} / ${mode}`"
+      :elapsed-ms="elapsedMs"
+      :note="loadingNote"
+    />
+
+    <section v-else-if="data" class="card">
+      <TierSummary
+        :period="periodText"
+        :timezone="data.timezone"
+        :users="data.totalUsers"
+        :messages="data.totalMessages"
+        :unique="data.totalUniqueMessages"
+      />
+
+      <div class="tier-grid">
+        <div class="tier-group" v-for="idx in 5" :key="idx">
+          <div class="tier-chip">
+            <span class="chip-color" :style="{ background: tierColors[`HT${idx}`] }" />
+            <div class="chip-meta">
+              <span class="chip-label">HT{{ idx }}</span>
+              <span class="range">{{ tierRanges[`HT${idx}`] }}</span>
+            </div>
+          </div>
+          <div class="tier-chip">
+            <span class="chip-color" :style="{ background: tierColors[`LT${idx}`] }" />
+            <div class="chip-meta">
+              <span class="chip-label">LT{{ idx }}</span>
+              <span class="range">{{ tierRanges[`LT${idx}`] }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <TierTable
+        ref="tableRef"
+        :entries="data.entries"
+        :profiles="profiles"
+        :avatar-classes="avatarClasses"
+        :tier-colors="tierColors"
+        @open-profile="openProfile"
+      />
+    </section>
+
+  </main>
+
+<UserCard
+  v-if="showProfile && userData"
+  :user-data="userData"
+  :display-name="displayNameLine"
+  :created-text="humanizeFromDate(userData.createdAt)"
+  :follow-text="humanizeFromDate(relations[userData.id]?.followedAt)"
+  :sub-text="humanizeMonths(relations[userData.id]?.subMonths)"
+  :role-text="userData.roles?.isPartner ? 'Партнёр' : (userData.roles?.isAffiliate ? 'Компаньон' : '')"
+  :selected-entry="selectedEntry"
+  :selected-rank="selectedRank"
+  :tier-colors="tierColors"
+  @close="showProfile = false"
+/>
+</template>
+
+<style scoped>
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+  background: #050505;
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #7dd3fc;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0;
+}
+h1 {
+  margin: 4px 0;
+  font-size: 32px;
+}
+.muted { margin: 0; color: #fff; }
+.pill {
+  background: #0b0b0b;
+  border: 1px solid #1a1a1a;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-weight: 700;
+}
+.card {
+  background: #0c0c0c;
+  border: 1px solid #161616;
+  border-radius: 14px;
+  padding: 16px;
+}
+.lookup {
+  display: grid;
+  gap: 12px;
+}
+.lookup-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.lookup-row input {
+  flex: 1;
+  background: #0b0b0b;
+  border: 1px solid #2d2d2d;
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 700;
+  transition: all 0.15s ease;
+  border: 1px solid #2d2d2d;
+  background: #0a0a0a;
+  color: #fff;
+  box-shadow: none;
+}
+.btn.primary:hover {
+  border-color: #444;
+  background: #0c0c0c;
+  transform: translateY(-1px);
+}
+.btn.primary:active {
+  transform: translateY(0);
+  border-color: #666;
+  background: #050505;
+}
+.profile {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.profile img {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid #1f2937;
+}
+.card.error {
+  border-color: #b91c1c;
+  color: #fecdd3;
+}
+.error-text {
+  color: #fca5a5;
+  margin: 0;
+}
+.tier-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.tier-group {
+  display: grid;
+  gap: 6px;
+}
+.tier-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #0b0b0b;
+  border: 1px solid #2d2d2d;
+  border-radius: 12px;
+}
+.chip-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 6px;
+}
+.chip-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+.range {
+  font-size: 12px;
+  color: #cbd5e1;
+}
+.profile-mini {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.btn.secondary {
+  background: #0d0d0d;
+  border: 1px solid #2d2d2d;
+}
+
+
+.refresh-btn {
+  align-self: flex-start;
+  padding: 10px 16px;
+}
+</style>
