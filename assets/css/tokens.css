@@ -7,7 +7,9 @@
   --color-brand-soft-strong: rgba(23, 23, 26, 0.35);
 
   /* Base */
-  --color-bg: #09090b;
+  --color-bg: #09090bad;
+  --color-bg2: #0e0ea100;
+  --color-bg3: #0d0d0da3;
   --color-surface: #0f0f12;
   --color-surface-soft: #17171a;
   --color-text-1: #ffffff;

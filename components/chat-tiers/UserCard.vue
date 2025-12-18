@@ -100,7 +100,7 @@ const formatHours = (count: number, minutes: number) => {
   z-index: 30;
 }
 .card {
-  background: #0c0c0c;
+  background: #var(--color-surface);
   border: 1px solid #1f1f1f;
   border-radius: 14px;
   padding: 10px;
@@ -111,6 +111,14 @@ const formatHours = (count: number, minutes: number) => {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  /* disable hover lift specifically for this modal card */
+  transition: none !important;
+}
+.card:hover {
+  transform: none !important;
+  /* preserve the original shadow on hover but prevent any lift */
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35) !important;
+  border-color: #1f1f1f !important;
 }
 .head {
   display: flex;
@@ -148,7 +156,7 @@ const formatHours = (count: number, minutes: number) => {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  background: #0b0b0b;
+  background: var(--color-bg);
   border: 1px solid #2d2d2d;
   border-radius: 10px;
   padding: 10px;
@@ -191,12 +199,12 @@ const formatHours = (count: number, minutes: number) => {
 }
 .btn.primary:hover {
   border-color: #444;
-  background: #0c0c0c;
-  transform: translateY(-1px);
+  background: #var(--color-surface);
+  transform: none;
 }
 .btn.primary:active {
-  transform: translateY(0);
+  transform: none;
   border-color: #666;
-  background: #050505;
-}
+  background: #var(--color-surface);
+} 
 </style>

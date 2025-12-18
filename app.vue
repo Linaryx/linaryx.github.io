@@ -1,6 +1,7 @@
-<script setup lang="ts">
+ЁЁ<script setup lang="ts">
 const route = useRoute();
 const isHome = computed(() => route.path === '/');
+const isChatTiers = computed(() => route.path.startsWith('/chat-tiers'));
 
 const navRef = ref<{ el: HTMLElement | null } | null>(null);
 const navHeight = ref(0);
@@ -26,7 +27,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page" :class="{ 'is-home': isHome }" :style="{ '--nav-height': `${navHeight}px` }">
+  <div class="page" :class="{ 'is-home': isHome, 'is-chat-tiers': isChatTiers }" :style="{ '--nav-height': `${navHeight}px` }">
+    <div class="site-bg" aria-hidden="true"></div>
     <NavBar ref="navRef" :hero="isHome" />
     <div :class="['shell', { 'shell--full': isHome }]">
       <NuxtPage />

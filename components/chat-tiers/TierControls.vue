@@ -164,7 +164,7 @@ watch(
 }
 .controls input,
 .controls select {
-  background: #0b0b0b;
+  background: var(--color-bg);
   border: 1px solid #2d2d2d;
   color: #fff;
   border-radius: 10px;

@@ -29,7 +29,13 @@
                 loading="lazy"
               />
               <div class="user-meta">
-                <span class="login">
+                <span
+                  class="login"
+                  role="button"
+                  tabindex="0"
+                  @click="$emit('open-profile', row.userId)"
+                  @keydown.enter="$emit('open-profile', row.userId)"
+                >
                   {{ profiles[row.userId]?.displayName || row.userLogin || row.userId }}
                 </span>
                 <span class="userid">ID: {{ row.userId }}</span>
@@ -143,10 +149,15 @@ th {
   font-weight: 600;
   position: sticky;
   top: 0;
-  background: #0c0c0c;
+  background: #var(--color-surface);
 }
 tr:hover td {
   background: rgba(124, 58, 237, 0.08);
+}
+/* disable any translate lift on table rows */
+tr:hover, tr:hover td {
+  transform: none !important;
+  transition: none !important;
 }
 .user {
   display: grid;
@@ -156,6 +167,13 @@ tr:hover td {
 }
 .login {
   font-weight: 600;
+  cursor: pointer;
+  text-decoration-skip-ink: auto;
+  text-decoration: underline;
+}
+.login:hover,
+.login:focus {
+  outline: none;
 }
 .user-meta {
   display: flex;

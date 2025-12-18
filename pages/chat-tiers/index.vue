@@ -368,7 +368,7 @@ const errorText = computed(() => {
           Подгружаем данные из rustlog tiers: online / offline / all.
         </p>
       </div>
-      <button class="btn primary refresh-btn" @click="reload">Обновить</button>
+      <button class="btn primary refresh-btn" @click="reload">Загрузить статистику</button>
     </header>
 
     <TierControls
@@ -387,7 +387,7 @@ const errorText = computed(() => {
       @reload="reload"
     />
 
-    <section class="card">
+    <section class="card no-lift">
       <div class="lookup">
         <div class="lookup-row">
           <input v-model="userLookup" type="text" placeholder="login or id" />
@@ -396,9 +396,9 @@ const errorText = computed(() => {
           </button>
         </div>
         <p v-if="userError" class="error-text">Ошибка: {{ userError }}</p>
-        <div v-if="userData && !showProfile" class="profile-mini">
+        <div v-if="userData" class="profile-mini">
           <span class="value">{{ userData.displayName }}</span>
-          <button class="btn secondary" @click="showProfile = true">Карточка</button>
+          <button class="btn secondary" @click="showProfile = !showProfile">{{ showProfile ? 'Скрыть карточку' : 'Карточка' }}</button>
         </div>
       </div>
     </section>
@@ -414,7 +414,7 @@ const errorText = computed(() => {
       :note="loadingNote"
     />
 
-    <section v-else-if="data" class="card">
+    <section v-else-if="data" class="card no-lift">
       <TierSummary
         :period="periodText"
         :timezone="data.timezone"
@@ -474,7 +474,7 @@ const errorText = computed(() => {
   max-width: 1100px;
   margin: 0 auto;
   padding: 32px 20px 64px;
-  background: #050505;
+  background: #var(--color-surface);
 }
 .header {
   display: flex;
@@ -496,7 +496,7 @@ h1 {
 }
 .muted { margin: 0; color: #fff; }
 .pill {
-  background: #0b0b0b;
+  background: var(--color-bg);
   border: 1px solid #1a1a1a;
   padding: 4px 8px;
   border-radius: 12px;
@@ -507,10 +507,17 @@ h1 {
   font-weight: 700;
 }
 .card {
-  background: #0c0c0c;
+  margin-top: 1em;
+  background: #var(--color-surface); 
   border: 1px solid #161616;
   border-radius: 14px;
   padding: 16px;
+}
+
+.card.no-lift:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--color-border);
 }
 .lookup {
   display: grid;
@@ -523,11 +530,16 @@ h1 {
 }
 .lookup-row input {
   flex: 1;
-  background: #0b0b0b;
+  background: var(--color-bg3);
   border: 1px solid #2d2d2d;
   color: #fff;
   border-radius: 12px;
   padding: 10px 12px;
+}
+/* Disable lift on lookup/search buttons */
+.lookup-row .btn:hover,
+.lookup-row .btn:active {
+  transform: none !important;
 }
 .btn {
   display: inline-flex;
@@ -546,13 +558,13 @@ h1 {
 }
 .btn.primary:hover {
   border-color: #444;
-  background: #0c0c0c;
-  transform: translateY(-1px);
+  background: #var(--color-surface);
+  transform: none;
 }
 .btn.primary:active {
-  transform: translateY(0);
+  transform: none;
   border-color: #666;
-  background: #050505;
+  background: #var(--color-surface);
 }
 .profile {
   display: flex;
@@ -589,7 +601,7 @@ h1 {
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  background: #0b0b0b;
+  background: var(--color-bg);
   border: 1px solid #2d2d2d;
   border-radius: 12px;
 }
@@ -618,9 +630,25 @@ h1 {
   border: 1px solid #2d2d2d;
 }
 
-
-.refresh-btn {
+.btn.primary.refresh-btn {
   align-self: flex-start;
   padding: 10px 16px;
+  background: #54818a;
+  border-color: rgb(115, 148, 155);
+  color: #ffffff; /* black text */
+  box-shadow: 0 6px 20px rgba(16,185,129,0.15), 0 0 12px rgba(16,185,129,0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s, color 0.15s;
+}
+
+.btn.primary.refresh-btn:hover {
+  transform: none;
+}
+
+.btn.primary.refresh-btn:active {
+  transform: none;
+  border-color: #065f46;
+  background: #059669;
+  box-shadow: 0 6px 18px rgba(16,185,129,0.12), 0 0 10px rgba(16,185,129,0.3);
+  color: #000000;
 }
 </style>

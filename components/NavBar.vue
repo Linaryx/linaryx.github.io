@@ -7,12 +7,15 @@ defineExpose({ el: navEl });
 <template>
   <header ref="navEl" :class="['nav', { 'nav--hero': props.hero }]">
     <NuxtLink class="nav-brand" to="/">
-      <span class="nav-logo">Ruina.team</span>
+      <span class="brand">
+        <span class="brand-icon" aria-hidden="true"></span>
+        <span class="nav-logo">Ruina.team</span>
+      </span>
     </NuxtLink>
     <nav class="nav-links">
-      <NuxtLink to="/guides">Guides</NuxtLink>
-      <NuxtLink to="/modpacks">Modpacks</NuxtLink>
-      <NuxtLink to="/chat-tiers">Chat Tiers</NuxtLink>
+      <NuxtLink to="/guides">Руководства</NuxtLink>
+      <NuxtLink to="/modpacks">Сборки модов</NuxtLink>
+      <NuxtLink to="/chat-tiers">Рейтинг чата</NuxtLink>
     </nav>
   </header>
 </template>

@@ -14,10 +14,10 @@
     <footer class="footer">
       <div class="footer-card">
         <div class="footer-inner">
-          <h2>Кто мы</h2>
+          <h2>Кто мы?</h2>
           <p class="footer-text">
-            Команда людей, кому не всё равно. Делаем гайды, модпаки и инструменты для стримеров и их
-            комьюнити.
+            Команда людей, которым не всё равно. Делаем гайды, модпаки и инструменты для стримеров и их
+            сообщества.
           </p>
 
           <div class="footer-actions">
@@ -45,6 +45,9 @@
 
 .home {
   background: transparent;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
 }
 
 /* ===== HERO ===== */
@@ -52,7 +55,8 @@
 .hero {
   position: relative;
   width: 100%;
-  min-height: 64vh;
+  flex: 1 1 auto; /* grow to take remaining space */
+  min-height: 0; /* allow flex child to shrink if needed */
   margin: 0;
   border-radius: 0;
   overflow: hidden;
@@ -67,8 +71,9 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(9, 9, 11, 0.15) 0%, rgba(9, 9, 11, 0.4) 100%),
+    linear-gradient(180deg, rgba(9, 9, 11, 0.01) 0%, rgba(9, 9, 11, 0.3) 100%),
     url("~/assets/img/ruines.webp") center bottom / min(1400px, 100%) no-repeat;
+  z-index: 0; /* sit behind the hero text */
 }
 
 .hero-inner {
@@ -88,8 +93,8 @@
   letter-spacing: -0.02em;
   color: #ffffff;
   text-align: center;
-  text-shadow: 0 0 24px rgba(255, 255, 255, 0.4);
-  transform: translateY(-150px);
+  text-shadow: 0 0 24px rgba(255, 255, 255, 0.719);
+  transform: translateY(-100px);
 }
 
 /* ===== MOBILE ===== */
@@ -108,10 +113,11 @@
   position: relative;
   z-index: 2;
   background: url("~/assets/img/bg.webp") center / cover no-repeat, #0b0b0e;
+  margin-top: auto; /* push footer to bottom when content is short */
 }
 
 .footer-card {
-  width: 100%;
+  /* width: 100%; */
   background: rgba(12, 12, 14, 0.92);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -119,7 +125,7 @@
 .footer-inner {
   width: min(1080px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 44px 0 56px;
+  padding: 10px 0;
 }
 
 .footer-card h2 {
@@ -133,7 +139,6 @@
   margin: 0 0 12px;
   color: rgba(255, 255, 255, 0.78);
   line-height: 1.6;
-  max-width: 78ch;
 }
 
 .footer-actions {

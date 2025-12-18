@@ -33,17 +33,46 @@ a {
   font-family: var(--font-base) !important;
 }
 
-.page {
-  background: var(--color-bg);
+:root {
+  color-scheme: dark;
 }
 
-.page.is-home {
-  background: url("~/assets/img/bg.webp") center / cover no-repeat, #0b0b0e;
+html, body, #__nuxt {
+  height: 100%;
+  min-height: 100%;
 }
+
+.page {
+  background: var(--color-bg2);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* ensure page fills viewport */
+  min-height: 100dvh; /* support dynamic viewport units on mobile */
+}
+
+/* ensure shell grows to push footer down */
+.shell {
+  flex: 1 0 auto;
+}
+
+/* global site background element (separate object) */
+.site-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url("~/assets/img/bg.webp") center / cover no-repeat;
+  /* visual adjustments requested */
+  filter: brightness(0.5) blur(0);
+}
+
 
 .nav {
-  position: sticky;
-  top: 12px;
+  position: absolute;
+   position: fixed;
+   top: 3em;
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 20;
   display: flex;
   align-items: center;
@@ -51,10 +80,12 @@ a {
   gap: 18px;
   height: 60px;
   padding: 0 18px;
-  width: min(1080px, calc(100% - 32px));
+  display: flex;
+  /* width: min(1080px, calc(100% - 32px)); */
+  width: fit-content;
   margin: 0px auto 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(10, 10, 12, 0.75);
+  background: rgba(10, 10, 12, 0.2);
   border-radius: 14px;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(10px);
@@ -68,15 +99,37 @@ a {
 .nav-brand {
   display: inline-flex;
   align-items: center;
+  gap: 0.8em;
   font-weight: 800;
   letter-spacing: -0.02em;
   font-size: 1rem;
   color: var(--color-text-1);
+  margin-right: 2em;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+}
+
+.brand-icon {
+  width: 2em;
+  height: 2em;
+  display: inline-block;
+  /* fill: red !important; */
+  background-image: url('/assets/img/svg/Favicon.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  /* -webkit-mask: url('/assets/img/svg/Favicon.svg') no-repeat center/contain;
+  mask: url('/assets/img/svg/Favicon.svg') no-repeat center/contain; */
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .nav-links {
   display: flex;
-  gap: 28px;
   align-items: center;
 }
 
@@ -124,13 +177,19 @@ a {
 .shell {
   max-width: 1160px;
   margin: 0 auto;
-  padding: 48px 24px 80px;
+  min-height: 100vh;
+}
+
+/* Wider layout for chat-tiers page */
+.page.is-chat-tiers .shell {
+  max-width: 1400px;
 }
 
 .shell--full {
   max-width: none;
   width: 100%;
   padding: 0;
+  min-height: 100vh;
 }
 
 .page:not(.is-home) .shell {
@@ -224,7 +283,7 @@ a {
 }
 
 .card {
-  background: var(--color-surface);
+  background: var(--color-bg3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
   padding: 16px 18px;
@@ -236,6 +295,13 @@ a {
   box-shadow: var(--shadow-soft);
   border-color: var(--color-brand-soft);
 }
+
+/* Disable lift on cards inside lists (guides, modpacks) */
+.card-grid .card:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--color-border);
+} 
 
 .card h3 {
   margin: 0 0 8px;
