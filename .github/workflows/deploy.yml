@@ -30,6 +30,13 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Prefetch public data (tiers/roles)
+        env:
+          NUXT_PUBLIC_SUPABASE_URL: ${{ secrets.NUXT_PUBLIC_SUPABASE_URL }}
+          NUXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NUXT_PUBLIC_SUPABASE_ANON_KEY }}
+          TIERS_CHANNELS: ${{ secrets.TIERS_CHANNELS || 'zakvielchannel' }}
+        run: bun run fetch:data
+
       - name: Build static site
         env:
           NITRO_PRESET: github-pages

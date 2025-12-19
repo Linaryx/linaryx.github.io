@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import TierControls from '~/components/chat-tiers/TierControls.vue';
 import TierSummary from '~/components/chat-tiers/TierSummary.vue';
 import TierTable from '~/components/chat-tiers/TierTable.vue';
@@ -7,15 +7,19 @@ import UserCard from '~/components/chat-tiers/UserCard.vue';
 import LoadingBar from '~/components/chat-tiers/LoadingBar.vue';
 import { useRoles } from '~/composables/useRoles';
 import { defaultTierColors, tierRanges } from '~/constants/tiers';
-import { fetchTiersSupabase as fetchTiers } from '~/lib/api';
+import { fetchAvailableChannels, fetchAvailablePeriods, fetchTiersSupabase as fetchTiers } from '~/lib/api';
 import type { Mode, Scope, TierEntry, TierResponse } from '~/types/tiers';
 
 const channel = ref('zakvielchannel');
 const year = ref(new Date().getFullYear());
 const month = ref(new Date().getMonth() + 1);
-const day = ref(new Date().getDate());
 const scope = ref<Scope>('month');
 const mode = ref<Mode>('online');
+const availableYears = ref<number[]>([]);
+const availableMonthsMap = ref<Record<number, number[]>>({});
+const availableMonths = computed(() => availableMonthsMap.value[year.value] || []);
+const availableChannels = ref<string[]>([]);
+const availableScopes = ref<Scope[]>(['year', 'month']);
 
 type IvrUser = {
   id: string;
@@ -61,11 +65,11 @@ const humanizeFromDate = (iso?: string) => {
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   const days = Math.max(0, Math.floor(diffMs / 86400000));
-  const years = Math.floor(days / 365);
-  const months = Math.floor((days % 365) / 30);
+  const yearsDiff = Math.floor(days / 365);
+  const monthsDiff = Math.floor((days % 365) / 30);
   const parts: string[] = [];
-  if (years) parts.push(`${years} ${plural(years, ['год', 'года', 'лет'])}`);
-  if (months) parts.push(`${months} ${plural(months, ['месяц', 'месяца', 'месяцев'])}`);
+  if (yearsDiff) parts.push(`${yearsDiff} ${plural(yearsDiff, ['год', 'года', 'лет'])}`);
+  if (monthsDiff) parts.push(`${monthsDiff} ${plural(monthsDiff, ['месяц', 'месяца', 'месяцев'])}`);
   if (!parts.length) parts.push('меньше месяца');
   return `${d.toLocaleDateString('ru-RU')} · ${parts.join(' ')} назад`;
 };
@@ -139,7 +143,6 @@ const fetchUser = async () => {
       : `https://api.ivr.fi/v2/twitch/user?login=${encodeURIComponent(term)}`;
     let res = await $fetch<IvrUser[]>(primaryUrl);
     if ((!res || !res.length) && !isId) {
-      // try as id if login lookup failed
       res = await $fetch<IvrUser[]>(`https://api.ivr.fi/v2/twitch/user?id=${encodeURIComponent(term)}`);
     }
     userData.value = res?.[0] ?? null;
@@ -176,7 +179,6 @@ const fetchUser = async () => {
 
 const openProfile = async (userId: string) => {
   userLookup.value = userId;
-  // быстрый фоллбек из текущего списка
   const entry = data.value?.entries.find((e: TierEntry) => e.userId === userId);
   const prof = profiles[userId];
   if (entry) {
@@ -215,6 +217,59 @@ const clearTimer = () => {
   }
 };
 
+const alignToAvailable = () => {
+  if (availableChannels.value.length && !availableChannels.value.includes(channel.value)) {
+    channel.value = availableChannels.value[0];
+  }
+  if (availableYears.value.length && !availableYears.value.includes(year.value)) {
+    year.value = availableYears.value[0];
+  }
+  if (scope.value === 'month') {
+    const monthsForYear = availableMonths.value;
+    if (!monthsForYear.length) {
+      scope.value = 'year';
+    } else if (!monthsForYear.includes(month.value)) {
+      month.value = monthsForYear[0];
+    }
+  }
+};
+
+const loadAvailable = async () => {
+  try {
+    const chRes = await fetchAvailableChannels();
+    availableChannels.value = chRes.channels;
+    const res = await fetchAvailablePeriods(channel.value);
+    availableYears.value = res.years;
+    availableMonthsMap.value = res.months;
+    const hasMonths = Object.keys(res.months || {}).length > 0;
+    const scopes: Scope[] = [];
+    if (res.years.length) scopes.push('year');
+    if (hasMonths) scopes.push('month');
+    availableScopes.value = scopes.length ? scopes : ['year'];
+    // первично сдвигаем год/месяц в допустимые для текущего канала
+    const firstYear = res.years[0];
+    if (firstYear && !res.years.includes(year.value)) {
+      year.value = firstYear;
+    }
+    const monthsForYear = res.months[year.value] || [];
+    const firstMonth = monthsForYear[0];
+    if (monthsForYear.length && !monthsForYear.includes(month.value) && firstMonth) {
+      month.value = firstMonth;
+    }
+    if (availableScopes.value.length === 1) {
+      scope.value = availableScopes.value[0];
+    } else if (!availableScopes.value.includes(scope.value)) {
+      scope.value = availableScopes.value[0];
+    }
+    alignToAvailable();
+  } catch {
+    availableChannels.value = [];
+    availableYears.value = [];
+    availableMonthsMap.value = {};
+    availableScopes.value = ['year'];
+  }
+};
+
 const loadTiers = async () => {
   pending.value = true;
   error.value = null;
@@ -231,7 +286,6 @@ const loadTiers = async () => {
       scope: scope.value,
       year: year.value,
       month: month.value,
-      day: day.value,
       mode: mode.value
     });
     prefetchIndex.value = 0;
@@ -260,8 +314,32 @@ watch(
 
 const reload = async () => {
   await loadRoles(channel.value);
+  await loadAvailable();
   await loadTiers();
 };
+
+watch(
+  () => [channel.value, year.value],
+  () => alignToAvailable()
+);
+
+watch(
+  () => channel.value,
+  async () => {
+    await loadAvailable();
+  }
+);
+
+watch(
+  () => availableScopes.value,
+  () => {
+    if (!availableScopes.value.includes(scope.value)) {
+      scope.value = availableScopes.value[0] || 'year';
+    }
+    alignToAvailable();
+  },
+  { deep: true }
+);
 
 const prefetchMoreProfiles = async () => {
   if (isPrefetching) return;
@@ -310,7 +388,8 @@ const handleScroll = () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
+  await loadAvailable();
   setupPrefetchObserver();
 });
 
@@ -325,8 +404,8 @@ onBeforeUnmount(() => {
 
 const periodText = computed(() => {
   if (!data.value) return '';
-  const { year: y, month: m, day: d } = data.value;
-  return [y, m, d].filter(Boolean).join('/');
+  const { year: y, month: m } = data.value;
+  return [y, m].filter(Boolean).join('/');
 });
 
 const selectedEntry = computed(() => {
@@ -376,13 +455,15 @@ const errorText = computed(() => {
       :scope="scope"
       :year="year"
       :month="month"
-      :day="day"
       :mode="mode"
+      :available-channels="availableChannels"
+      :available-scopes="availableScopes"
+      :available-years="availableYears"
+      :available-months="availableMonths"
       @update:channel="channel = $event"
       @update:scope="scope = $event"
       @update:year="year = $event"
       @update:month="month = $event"
-      @update:day="day = $event"
       @update:mode="mode = $event"
       @reload="reload"
     />
@@ -454,19 +535,19 @@ const errorText = computed(() => {
 
   </main>
 
-<UserCard
-  v-if="showProfile && userData"
-  :user-data="userData"
-  :display-name="displayNameLine"
-  :created-text="humanizeFromDate(userData.createdAt)"
-  :follow-text="humanizeFromDate(relations[userData.id]?.followedAt)"
-  :sub-text="humanizeMonths(relations[userData.id]?.subMonths)"
-  :role-text="userData.roles?.isPartner ? 'Партнёр' : (userData.roles?.isAffiliate ? 'Компаньон' : '')"
-  :selected-entry="selectedEntry"
-  :selected-rank="selectedRank"
-  :tier-colors="tierColors"
-  @close="showProfile = false"
-/>
+  <UserCard
+    v-if="showProfile && userData"
+    :user-data="userData"
+    :display-name="displayNameLine"
+    :created-text="humanizeFromDate(userData.createdAt)"
+    :follow-text="humanizeFromDate(relations[userData.id]?.followedAt)"
+    :sub-text="humanizeMonths(relations[userData.id]?.subMonths)"
+    :role-text="userData.roles?.isPartner ? 'Партнёр' : (userData.roles?.isAffiliate ? 'Компаньон' : '')"
+    :selected-entry="selectedEntry"
+    :selected-rank="selectedRank"
+    :tier-colors="tierColors"
+    @close="showProfile = false"
+  />
 </template>
 
 <style scoped>
@@ -474,14 +555,16 @@ const errorText = computed(() => {
   max-width: 1100px;
   margin: 0 auto;
   padding: 32px 20px 64px;
-  background: #var(--color-surface);
+  background: #0b0b0e;
 }
+
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
+
 .eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -490,13 +573,19 @@ const errorText = computed(() => {
   font-weight: 600;
   margin: 0;
 }
+
 h1 {
   margin: 4px 0;
   font-size: 32px;
 }
-.muted { margin: 0; color: #fff; }
+
+.muted {
+  margin: 0;
+  color: #ffffff;
+}
+
 .pill {
-  background: var(--color-bg);
+  background: #0b0b0e;
   border: 1px solid #1a1a1a;
   padding: 4px 8px;
   border-radius: 12px;
@@ -506,9 +595,10 @@ h1 {
   align-items: center;
   font-weight: 700;
 }
+
 .card {
   margin-top: 1em;
-  background: #var(--color-surface); 
+  background: #111111;
   border: 1px solid #161616;
   border-radius: 14px;
   padding: 16px;
@@ -517,30 +607,34 @@ h1 {
 .card.no-lift:hover {
   transform: none;
   box-shadow: none;
-  border-color: var(--color-border);
+  border-color: #1f1f1f;
 }
+
 .lookup {
   display: grid;
   gap: 12px;
 }
+
 .lookup-row {
   display: flex;
   gap: 8px;
   align-items: center;
 }
+
 .lookup-row input {
   flex: 1;
-  background: var(--color-bg3);
+  background: #0b0b0b;
   border: 1px solid #2d2d2d;
-  color: #fff;
+  color: #ffffff;
   border-radius: 12px;
   padding: 10px 12px;
 }
-/* Disable lift on lookup/search buttons */
+
 .lookup-row .btn:hover,
 .lookup-row .btn:active {
   transform: none !important;
 }
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -553,24 +647,28 @@ h1 {
   transition: all 0.15s ease;
   border: 1px solid #2d2d2d;
   background: #0a0a0a;
-  color: #fff;
+  color: #ffffff;
   box-shadow: none;
 }
+
 .btn.primary:hover {
-  border-color: #444;
-  background: #var(--color-surface);
+  border-color: #444444;
+  background: #111111;
   transform: none;
 }
+
 .btn.primary:active {
   transform: none;
-  border-color: #666;
-  background: #var(--color-surface);
+  border-color: #666666;
+  background: #111111;
 }
+
 .profile {
   display: flex;
   gap: 12px;
   align-items: center;
 }
+
 .profile img {
   width: 56px;
   height: 56px;
@@ -578,53 +676,63 @@ h1 {
   object-fit: cover;
   border: 1px solid #1f2937;
 }
+
 .card.error {
   border-color: #b91c1c;
   color: #fecdd3;
 }
+
 .error-text {
   color: #fca5a5;
   margin: 0;
 }
+
 .tier-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 10px;
   margin-bottom: 12px;
 }
+
 .tier-group {
   display: grid;
   gap: 6px;
 }
+
 .tier-chip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  background: var(--color-bg);
+  background: #0b0b0e;
   border: 1px solid #2d2d2d;
   border-radius: 12px;
 }
+
 .chip-color {
   width: 16px;
   height: 16px;
   border-radius: 6px;
 }
+
 .chip-meta {
   display: flex;
   flex-direction: column;
   line-height: 1.1;
 }
+
 .range {
   font-size: 12px;
   color: #cbd5e1;
 }
+
 .profile-mini {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
+
 .btn.secondary {
   background: #0d0d0d;
   border: 1px solid #2d2d2d;
@@ -634,9 +742,9 @@ h1 {
   align-self: flex-start;
   padding: 10px 16px;
   background: #54818a;
-  border-color: rgb(115, 148, 155);
-  color: #ffffff; /* black text */
-  box-shadow: 0 6px 20px rgba(16,185,129,0.15), 0 0 12px rgba(16,185,129,0.35);
+  border-color: #73949b;
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.15), 0 0 12px rgba(16, 185, 129, 0.35);
   transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s, color 0.15s;
 }
 
@@ -648,7 +756,7 @@ h1 {
   transform: none;
   border-color: #065f46;
   background: #059669;
-  box-shadow: 0 6px 18px rgba(16,185,129,0.12), 0 0 10px rgba(16,185,129,0.3);
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.12), 0 0 10px rgba(16, 185, 129, 0.3);
   color: #000000;
 }
 </style>

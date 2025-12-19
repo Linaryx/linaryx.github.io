@@ -1,12 +1,21 @@
 <template>
   <div class="controls">
     <label>
-      <span>Channel</span>
-      <input v-model="local.channel" type="text" />
+      <span>Канал</span>
+      <template v-if="channelOptions.length">
+        <select v-model="local.channel">
+          <option v-for="c in channelOptions" :key="c" :value="c">
+            {{ c }}
+          </option>
+        </select>
+      </template>
+      <template v-else>
+        <input v-model="local.channel" type="text" />
+      </template>
     </label>
 
     <label>
-      <span>Scope</span>
+      <span>Период</span>
       <select v-model="local.scope">
         <option v-for="opt in scopeOptions" :key="opt.value" :value="opt.value">
           {{ opt.label }}
@@ -14,14 +23,14 @@
       </select>
     </label>
 
-    <label v-if="local.scope !== 'day'">
-      <span>Year</span>
+    <label>
+      <span>Год</span>
       <select v-model.number="local.year">
         <option v-for="y in yearOptions" :key="y" :value="y">{{ y }}</option>
       </select>
     </label>
 
-    <label v-if="local.scope !== 'year' && local.scope !== 'day'">
+    <label v-if="local.scope !== 'year'">
       <span>Month</span>
       <select v-model.number="local.month">
         <option v-for="m in monthOptions" :key="m.value" :value="m.value">
@@ -30,19 +39,8 @@
       </select>
     </label>
 
-    <label v-if="local.scope === 'day'">
-      <span>Дата</span>
-      <input
-        type="date"
-        :value="dateValue"
-        :min="minDate"
-        :max="maxDate"
-        @input="onDateChange"
-      />
-    </label>
-
     <label>
-      <span>Mode</span>
+      <span>Режим чата</span>
       <select v-model="local.mode">
         <option v-for="opt in modeOptions" :key="opt.value" :value="opt.value">
           {{ opt.label }}
@@ -54,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from 'vue';
+import { computed, reactive, watch } from 'vue';
 import type { Mode, Scope } from '~/types/tiers';
 
 const props = defineProps<{
@@ -62,8 +60,11 @@ const props = defineProps<{
   scope: Scope;
   year: number;
   month: number;
-  day: number;
   mode: Mode;
+  availableChannels?: string[];
+  availableScopes?: Scope[];
+  availableYears?: number[];
+  availableMonths?: number[];
 }>();
 
 const emit = defineEmits<{
@@ -71,7 +72,6 @@ const emit = defineEmits<{
   (e: 'update:scope', v: Scope): void;
   (e: 'update:year', v: number): void;
   (e: 'update:month', v: number): void;
-  (e: 'update:day', v: number): void;
   (e: 'update:mode', v: Mode): void;
   (e: 'reload'): void;
 }>();
@@ -81,24 +81,60 @@ const modeOptions: { label: string; value: Mode }[] = [
   { label: 'Online', value: 'online' },
   { label: 'Offline', value: 'offline' },
 ];
-const scopeOptions: { label: string; value: Scope }[] = [
-  { label: 'Year', value: 'year' },
-  { label: 'Month', value: 'month' },
-  { label: 'Day', value: 'day' },
-];
+const scopeOptions = computed<{ label: string; value: Scope }[]>(() => {
+  const avail = props.availableScopes && props.availableScopes.length
+    ? props.availableScopes
+    : (['year', 'month'] as Scope[]);
+  return avail.map((s) => ({
+    value: s,
+    label: s === 'year' ? 'Year' : 'Month',
+  }));
+});
 
 const local = reactive({
   channel: props.channel,
   scope: props.scope,
   year: props.year,
   month: props.month,
-  day: props.day,
   mode: props.mode,
 });
 
+// синхронизируем локальное состояние, если родитель меняет значения
+watch(
+  () => props.channel,
+  (v) => {
+    local.channel = v;
+  }
+);
+watch(
+  () => props.scope,
+  (v) => {
+    local.scope = v;
+  }
+);
+watch(
+  () => props.year,
+  (v) => {
+    local.year = v;
+  }
+);
+watch(
+  () => props.month,
+  (v) => {
+    local.month = v;
+  }
+);
+watch(
+  () => props.mode,
+  (v) => {
+    local.mode = v;
+  }
+);
+
 const currentYear = new Date().getFullYear();
-const yearOptions = Array.from({ length: currentYear - 2021 }, (_, i) => currentYear - i);
-const monthOptions = [
+const channelOptions = computed(() => props.availableChannels || []);
+const defaultYears = Array.from({ length: currentYear - 2021 }, (_, i) => currentYear - i);
+const defaultMonthOptions = [
   { value: 1, label: '01 · Январь' },
   { value: 2, label: '02 · Февраль' },
   { value: 3, label: '03 · Март' },
@@ -112,29 +148,17 @@ const monthOptions = [
   { value: 11, label: '11 · Ноябрь' },
   { value: 12, label: '12 · Декабрь' },
 ];
-const dayOptions = Array.from({ length: 31 }, (_, i) => i + 1);
-
-const minDate = '2022-01-01';
-const pad = (n: number) => n.toString().padStart(2, '0');
-const dateValue = computed(() => {
-  return `${local.year}-${pad(local.month)}-${pad(local.day)}`;
-});
-const maxDate = computed(() => {
-  const d = new Date();
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-});
-
-const onDateChange = (e: Event) => {
-  const val = (e.target as HTMLInputElement).value;
-  if (!val || val.length < 10) return;
-  const [y, m, d] = val.split('-').map((v) => parseInt(v, 10));
-  if (Number.isFinite(y) && Number.isFinite(m) && Number.isFinite(d)) {
-    local.year = y;
-    local.month = m;
-    local.day = d;
+const monthOptions = computed(() => {
+  const avail = props.availableMonths || [];
+  if (avail.length) {
+    return avail.map((m) => {
+      const base = defaultMonthOptions.find((o) => o.value === m);
+      return { value: m, label: base ? base.label : m.toString().padStart(2, '0') };
+    });
   }
-};
-
+  return defaultMonthOptions;
+});
+const yearOptions = computed(() => (props.availableYears?.length ? props.availableYears : defaultYears));
 watch(
   () => ({ ...local }),
   (v) => {
@@ -142,7 +166,6 @@ watch(
     emit('update:scope', v.scope);
     emit('update:year', v.year);
     emit('update:month', v.month);
-    emit('update:day', v.day);
     emit('update:mode', v.mode);
   },
   { deep: true }

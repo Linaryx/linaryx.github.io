@@ -25,22 +25,26 @@ export const useRoles = () => {
     state.loading = true;
     mods.clear();
     vips.clear();
-    try {
-      const res: any = await $fetch(`/api/roles?channel=${encodeURIComponent(chan)}&type=mods`);
-      (Array.isArray(res) ? res : []).forEach((m: any) => mods.add(m.id || m.login || m.name));
-    } catch {
-      /* ignore */
-    }
-    try {
-      const res: any = await $fetch(`/api/roles?channel=${encodeURIComponent(chan)}&type=vips`);
-      (Array.isArray(res) ? res : []).forEach((v: any) => vips.add(v.id || v.login || v.name));
-    } catch {
-      /* ignore */
-    }
 
-    state.lastChannel = chan;
-    state.lastLoadedAt = now;
-    state.loading = false;
+    const fetchRoles = async (type: 'mods' | 'vips') => {
+      const url = `https://tools.2807.eu/api/get${type}/${encodeURIComponent(chan)}`;
+      return $fetch<any[]>(url).catch(() => []);
+    };
+
+    try {
+      const resMods = await fetchRoles('mods');
+      (Array.isArray(resMods) ? resMods : []).forEach((m: any) =>
+        mods.add(m.id || m.login || m.name)
+      );
+      const resVips = await fetchRoles('vips');
+      (Array.isArray(resVips) ? resVips : []).forEach((v: any) =>
+        vips.add(v.id || v.login || v.name)
+      );
+    } finally {
+      state.lastChannel = chan;
+      state.lastLoadedAt = now;
+      state.loading = false;
+    }
   };
 
   const avatarClasses = (id: string) => ({

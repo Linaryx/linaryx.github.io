@@ -121,7 +121,7 @@ const tierBorderStyle = (tier?: string) => {
   const color = normalizeColor(props.tierColors[tier]);
   if (!color) return {};
   return {
-    border: `1px solid ${color}`,
+    border: `2px solid ${color}`,
     padding: '4px 8px',
     borderRadius: '5px',
     color: tierTextColor(color),
@@ -149,7 +149,7 @@ th {
   font-weight: 600;
   position: sticky;
   top: 0;
-  background: #var(--color-surface);
+  background: #0c0c0c;
 }
 tr:hover td {
   background: rgba(124, 58, 237, 0.08);

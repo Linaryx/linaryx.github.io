@@ -3,6 +3,15 @@ import { ofetch } from 'ofetch';
 import type { Mode, Scope, TierResponse } from '~/types/tiers';
 import { useSupabaseClient } from './supabase';
 
+type AvailableResult = {
+  years: number[];
+  months: Record<number, number[]>;
+};
+
+type AvailableChannelsResult = {
+  channels: string[];
+};
+
 type TiersParams = {
   channel: string;
   scope: Scope;
@@ -74,4 +83,57 @@ export async function fetchTiersSupabase(params: TiersParams): Promise<TierRespo
     totalUniqueMessages: data.total_unique_messages,
     entries: data.entries,
   };
+}
+
+export async function fetchAvailablePeriods(channel: string): Promise<AvailableResult> {
+  if (!channel.trim()) return { years: [], months: {} };
+  const sb = useSupabaseClient();
+  const { data, error } = await sb
+    .from('tiers_snapshots')
+    .select('scope,period_key')
+    .eq('channel', channel);
+
+  if (error) throw error;
+
+  const years = new Set<number>();
+  const months: Record<number, Set<number>> = {};
+
+  (data || []).forEach((row: any) => {
+    const scope = row?.scope as Scope | undefined;
+    const key = String(row?.period_key || '');
+    const y = parseInt(key.slice(0, 4), 10);
+    const m = parseInt(key.slice(4, 6), 10);
+    if (!Number.isFinite(y)) return;
+    years.add(y);
+    if (scope === 'month' && Number.isFinite(m)) {
+      if (!months[y]) months[y] = new Set<number>();
+      months[y].add(m);
+    }
+  });
+
+  const monthsNormalized: Record<number, number[]> = {};
+  Object.entries(months).forEach(([yearStr, set]) => {
+    const yy = Number(yearStr);
+    monthsNormalized[yy] = Array.from(set).sort((a, b) => a - b);
+  });
+
+  return {
+    years: Array.from(years).sort((a, b) => b - a),
+    months: monthsNormalized,
+  };
+}
+
+export async function fetchAvailableChannels(): Promise<AvailableChannelsResult> {
+  const sb = useSupabaseClient();
+  const { data, error } = await sb
+    .from('tiers_snapshots')
+    .select('channel', { count: 'exact', head: false });
+
+  if (error) throw error;
+  const set = new Set<string>();
+  (data || []).forEach((row: any) => {
+    const ch = (row?.channel || '').toString().trim();
+    if (ch) set.add(ch);
+  });
+  return { channels: Array.from(set).sort() };
 }

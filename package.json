@@ -10,7 +10,11 @@
     "dev": "nuxt dev",
     "build": "nuxt build",
     "generate": "nuxt generate",
-    "preview": "nuxt preview"
+    "preview": "nuxt preview",
+    "fetch:data": "bunx tsx scripts/fetch-data.ts",
+    "test:types": "bunx tsc --noEmit --skipLibCheck",
+    "test:build": "bun run generate",
+    "scan:roles": "bunx tsx scripts/scan-roles.ts"
   },
   "dependencies": {
     "@primeuix/themes": "^1.0.0",
