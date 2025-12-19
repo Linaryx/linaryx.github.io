@@ -555,7 +555,7 @@ const errorText = computed(() => {
 <style scoped>
 .page {
   min-width: 60vw;
-  /* margin: 0 auto; */
+  margin-top: 5em;
   padding: 32px 20px 64px;
   background: var(--color-bg3);
   border-radius: 1em;

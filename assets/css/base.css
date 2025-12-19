@@ -327,3 +327,48 @@ html, body, #__nuxt {
   font-weight: 700;
   font-size: 0.85rem;
 }
+
+/* App-level loading overlay (shown until window 'load' event) */
+.app-loading-root {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Use the theme token so the loading screen matches site background */
+  /* background: var(--color-bg); */
+  background-color: rgba(255, 0, 0, 0);
+  color: var(--color-text-1);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  display: block;
+  object-fit: contain;
+  transform-origin: center;
+  animation: spin 1s linear infinite;
+  /* keep original SVG colors (white) — do not recolor or filter */
+  filter: none;
+  -webkit-filter: none;
+  background: transparent;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.app-loading-text {
+  color: var(--color-text-2);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}

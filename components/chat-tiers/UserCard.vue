@@ -100,14 +100,15 @@ const formatHours = (count: number, minutes: number) => {
   z-index: 30;
 }
 .card {
-  background: var(--color-bg1);
-  border: 2px solid var(--color-border);
+  background: #44555a; /* updated background */
+  border: 2px solid rgba(0,0,0,0.35);
   background-repeat: no-repeat;
   border-radius: 14px;
   padding: 1em;
   width: 100%;
   max-width: clamp(320px, 80vw, 440px);
-  color: #fff;
+  color: #ffffff;
+  font-weight: 700; /* make primary text bold */
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
@@ -119,7 +120,7 @@ const formatHours = (count: number, minutes: number) => {
   transform: none !important;
   /* preserve the original shadow on hover but prevent any lift */
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35) !important;
-  border-color: #1f1f1f !important;
+  border-color: rgba(0,0,0,0.45) !important;
 }
 .head {
   display: flex;
@@ -137,13 +138,17 @@ const formatHours = (count: number, minutes: number) => {
   height: clamp(40px, 10vw, 48px);
   border-radius: 10px;
   object-fit: cover;
-  border: 2px solid #2d2d2d;
+  border: 2px solid rgba(0,0,0,0.5);
 }
 .title {
   margin: 0;
+  font-weight: 800;
+  color: #ffffff;
 }
 .muted {
-  color: #9ca3af;
+  color: #ffffff;
+  font-weight: 700;
+  opacity: 0.95;
 }
 .mono {
   font-family: var(--font-base);
@@ -157,20 +162,21 @@ const formatHours = (count: number, minutes: number) => {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  background: var(--color-bg);
-  border: 1px solid #2d2d2d;
+  background: #44555a; /* match card background */
+  border: 1px solid rgba(0,0,0,0.25);
   border-radius: 10px;
   padding: 10px;
 }
 .label {
   margin: 0;
   font-size: 0.8em;
-  color: #cbd5e1;
+  color: #ffffff;
+  font-weight: 700;
 }
 .value {
   margin: 0;
-  font-weight: 700;
-  color: var(--color-text-1);
+  font-weight: 800;
+  color: #ffffff;
 }
 .tiers {
   display: grid;
@@ -193,7 +199,7 @@ const formatHours = (count: number, minutes: number) => {
   text-decoration: none;
   font-weight: 700;
   transition: all 0.15s ease;
-  border: 2px solid #2d2d2d;
+  border: 2px solid rgba(0,0,0,0.45);
   background: #0a0a0a;
   color: #fff;
   box-shadow: none;
@@ -207,5 +213,13 @@ const formatHours = (count: number, minutes: number) => {
   transform: none;
   border-color: #666;
   background: var(--color-surface);
-} 
+}
+
+/* Force any SVG inside the card (e.g., progress icons) to use white */
+.card svg,
+.card svg * {
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+  color: #ffffff !important;
+}
 </style>
