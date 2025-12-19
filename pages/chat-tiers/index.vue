@@ -442,12 +442,14 @@ const errorText = computed(() => {
   <main class="page">
     <header class="header">
       <div>
-        <h1>Тиры чата</h1>
+        <h1>Рейтинг пользователей чата</h1>
         <p class="muted">
-          Подгружаем данные из rustlog tiers: online / offline / all.
+          Подгружаем данные из <a href="https://github.com/Linaryx/rustlog" target="_blank" rel="noopener noreferrer">rustlog tiers</a>: online / offline / all
         </p>
       </div>
-      <button class="btn primary refresh-btn" @click="reload">Загрузить статистику</button>
+      <button class="btn primary refresh-btn" @click="reload" :disabled="pending">
+        {{ pending ? 'Загрузка...' : 'Загрузить статистику' }}
+      </button>
     </header>
 
     <TierControls
@@ -552,10 +554,14 @@ const errorText = computed(() => {
 
 <style scoped>
 .page {
-  max-width: 1100px;
-  margin: 0 auto;
+  min-width: 60vw;
+  /* margin: 0 auto; */
   padding: 32px 20px 64px;
-  background: #0b0b0e;
+  background: var(--color-bg3);
+  border-radius: 1em;
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(10px);
+  width: 100%;
 }
 
 .header {
@@ -598,7 +604,7 @@ h1 {
 
 .card {
   margin-top: 1em;
-  background: #111111;
+  background: var(--color-bg2);
   border: 1px solid #161616;
   border-radius: 14px;
   padding: 16px;
@@ -607,6 +613,7 @@ h1 {
 .card.no-lift:hover {
   transform: none;
   box-shadow: none;
+
   border-color: #1f1f1f;
 }
 
@@ -741,10 +748,10 @@ h1 {
 .btn.primary.refresh-btn {
   align-self: flex-start;
   padding: 10px 16px;
-  background: #54818a;
-  border-color: #73949b;
+  background: var(--color-brand-accent-1);
+  border-color: var(--color-brand-accent-2);
   color: #ffffff;
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.15), 0 0 12px rgba(16, 185, 129, 0.35);
+  box-shadow: 0 6px 20px rgba(16, 174, 185, 0.15), 0 0 12px rgba(16, 145, 185, 0.35);
   transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s, color 0.15s;
 }
 
@@ -757,6 +764,38 @@ h1 {
   border-color: #065f46;
   background: #059669;
   box-shadow: 0 6px 18px rgba(16, 185, 129, 0.12), 0 0 10px rgba(16, 185, 129, 0.3);
-  color: #000000;
+}
+
+/* Disabled state: gray and non-interactive */
+.btn.primary.refresh-btn[disabled],
+.btn.primary.refresh-btn:disabled {
+  background: #4b5563;
+  border-color: #374151;
+  color: #e5e7eb;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.btn.primary.refresh-btn[disabled]:hover,
+.btn.primary.refresh-btn[disabled]:active,
+.btn.primary.refresh-btn:disabled:hover,
+.btn.primary.refresh-btn:disabled:active {
+  transform: none;
+  background: #4b5563;
+  border-color: #374151;
+  box-shadow: none;
+}
+
+/* Underline rustlog link in muted text */
+.muted a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  color: inherit;
+}
+
+.muted a:focus,
+.muted a:hover {
+  text-decoration: underline;
 }
 </style>

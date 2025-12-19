@@ -13,7 +13,9 @@ body {
   color: var(--color-text-1);
   line-height: 1.6;
 }
-
+input:focus{
+  outline: var(--color-brand-accent-1) 1px solid;
+}
 a,
 button,
 input,

@@ -100,10 +100,11 @@ const formatHours = (count: number, minutes: number) => {
   z-index: 30;
 }
 .card {
-  background: #var(--color-surface);
-  border: 1px solid #1f1f1f;
+  background: var(--color-bg1);
+  border: 2px solid var(--color-border);
+  background-repeat: no-repeat;
   border-radius: 14px;
-  padding: 10px;
+  padding: 1em;
   width: 100%;
   max-width: clamp(320px, 80vw, 440px);
   color: #fff;
@@ -111,7 +112,7 @@ const formatHours = (count: number, minutes: number) => {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  /* disable hover lift specifically for this modal card */
+  backdrop-filter: blur(10px);
   transition: none !important;
 }
 .card:hover {
@@ -134,9 +135,9 @@ const formatHours = (count: number, minutes: number) => {
 .user img {
   width: clamp(40px, 10vw, 48px);
   height: clamp(40px, 10vw, 48px);
-  border-radius: 12px;
+  border-radius: 10px;
   object-fit: cover;
-  border: 1px solid #2d2d2d;
+  border: 2px solid #2d2d2d;
 }
 .title {
   margin: 0;
@@ -163,7 +164,7 @@ const formatHours = (count: number, minutes: number) => {
 }
 .label {
   margin: 0;
-  font-size: 12px;
+  font-size: 0.8em;
   color: #cbd5e1;
 }
 .value {
@@ -192,19 +193,19 @@ const formatHours = (count: number, minutes: number) => {
   text-decoration: none;
   font-weight: 700;
   transition: all 0.15s ease;
-  border: 1px solid #2d2d2d;
+  border: 2px solid #2d2d2d;
   background: #0a0a0a;
   color: #fff;
   box-shadow: none;
 }
 .btn.primary:hover {
   border-color: #444;
-  background: #var(--color-surface);
+  background: var(--color-surface);
   transform: none;
 }
 .btn.primary:active {
   transform: none;
   border-color: #666;
-  background: #var(--color-surface);
+  background: var(--color-surface);
 } 
 </style>

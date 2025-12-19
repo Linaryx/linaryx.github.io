@@ -93,7 +93,7 @@
   letter-spacing: -0.02em;
   color: #ffffff;
   text-align: center;
-  text-shadow: 0 0 24px rgba(255, 255, 255, 0.719);
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.719);
   transform: translateY(-100px);
 }
 

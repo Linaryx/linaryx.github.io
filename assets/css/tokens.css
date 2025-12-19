@@ -5,11 +5,14 @@
   --color-brand-3: #17171a;
   --color-brand-soft: rgba(9, 9, 11, 0.22);
   --color-brand-soft-strong: rgba(23, 23, 26, 0.35);
+  --color-brand-accent-1: #54818a;
+  --color-brand-accent-2: #73949b;
+;
 
   /* Base */
   --color-bg: #09090bad;
-  --color-bg2: #0e0ea100;
-  --color-bg3: #0d0d0da3;
+  --color-bg2: #0d0d0d88;
+  --color-bg3: #0d0d0dad;
   --color-surface: #0f0f12;
   --color-surface-soft: #17171a;
   --color-text-1: #ffffff;
