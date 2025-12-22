@@ -6,6 +6,7 @@ import { useSupabaseClient } from './supabase';
 type AvailableResult = {
   years: number[];
   months: Record<number, number[]>;
+  modes: Record<Scope, Mode[]>;
 };
 
 type AvailableChannelsResult = {
@@ -86,21 +87,29 @@ export async function fetchTiersSupabase(params: TiersParams): Promise<TierRespo
 }
 
 export async function fetchAvailablePeriods(channel: string): Promise<AvailableResult> {
-  if (!channel.trim()) return { years: [], months: {} };
+  if (!channel.trim()) return { years: [], months: {}, modes: { year: [], month: [], day: [] } };
   const sb = useSupabaseClient();
   const { data, error } = await sb
     .from('tiers_snapshots')
-    .select('scope,period_key')
+    .select('scope,period_key,mode')
     .eq('channel', channel);
 
   if (error) throw error;
 
   const years = new Set<number>();
   const months: Record<number, Set<number>> = {};
+  const modes: Record<Scope, Set<Mode>> = {
+    year: new Set<Mode>(),
+    month: new Set<Mode>(),
+    day: new Set<Mode>(),
+  };
+
+  const modeOrder: Mode[] = ['all', 'online', 'offline'];
 
   (data || []).forEach((row: any) => {
     const scope = row?.scope as Scope | undefined;
     const key = String(row?.period_key || '');
+    const mode = row?.mode as Mode | undefined;
     const y = parseInt(key.slice(0, 4), 10);
     const m = parseInt(key.slice(4, 6), 10);
     if (!Number.isFinite(y)) return;
@@ -108,6 +117,9 @@ export async function fetchAvailablePeriods(channel: string): Promise<AvailableR
     if (scope === 'month' && Number.isFinite(m)) {
       if (!months[y]) months[y] = new Set<number>();
       months[y].add(m);
+    }
+    if (scope && modes[scope] && mode) {
+      modes[scope].add(mode);
     }
   });
 
@@ -117,9 +129,16 @@ export async function fetchAvailablePeriods(channel: string): Promise<AvailableR
     monthsNormalized[yy] = Array.from(set).sort((a, b) => a - b);
   });
 
+  const modesNormalized: Record<Scope, Mode[]> = {
+    year: Array.from(modes.year).sort((a, b) => modeOrder.indexOf(a) - modeOrder.indexOf(b)),
+    month: Array.from(modes.month).sort((a, b) => modeOrder.indexOf(a) - modeOrder.indexOf(b)),
+    day: Array.from(modes.day).sort((a, b) => modeOrder.indexOf(a) - modeOrder.indexOf(b)),
+  };
+
   return {
     years: Array.from(years).sort((a, b) => b - a),
     months: monthsNormalized,
+    modes: modesNormalized,
   };
 }
 

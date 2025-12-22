@@ -20,6 +20,12 @@ const availableMonthsMap = ref<Record<number, number[]>>({});
 const availableMonths = computed(() => availableMonthsMap.value[year.value] || []);
 const availableChannels = ref<string[]>([]);
 const availableScopes = ref<Scope[]>(['year', 'month']);
+const availableModesMap = ref<Record<Scope, Mode[]>>({
+  year: ['all', 'online', 'offline'],
+  month: ['all', 'online', 'offline'],
+  day: ['all', 'online', 'offline'],
+});
+const availableModes = computed(() => availableModesMap.value[scope.value] || ['all', 'online', 'offline']);
 
 type IvrUser = {
   id: string;
@@ -232,6 +238,9 @@ const alignToAvailable = () => {
       month.value = monthsForYear[0];
     }
   }
+  if (availableModes.value.length && !availableModes.value.includes(mode.value)) {
+    mode.value = availableModes.value[0];
+  }
 };
 
 const loadAvailable = async () => {
@@ -241,6 +250,7 @@ const loadAvailable = async () => {
     const res = await fetchAvailablePeriods(channel.value);
     availableYears.value = res.years;
     availableMonthsMap.value = res.months;
+    availableModesMap.value = res.modes as Record<Scope, Mode[]>;
     const hasMonths = Object.keys(res.months || {}).length > 0;
     const scopes: Scope[] = [];
     if (res.years.length) scopes.push('year');
@@ -460,6 +470,7 @@ const errorText = computed(() => {
       :available-scopes="availableScopes"
       :available-years="availableYears"
       :available-months="availableMonths"
+      :available-modes="availableModes"
       @update:channel="channel = $event"
       @update:scope="scope = $event"
       @update:year="year = $event"

@@ -42,7 +42,7 @@
     <label>
       <span>Режим чата</span>
       <select v-model="local.mode">
-        <option v-for="opt in modeOptions" :key="opt.value" :value="opt.value">
+        <option v-for="opt in modeOptionsComputed" :key="opt.value" :value="opt.value">
           {{ opt.label }}
         </option>
       </select>
@@ -88,6 +88,14 @@ const scopeOptions = computed<{ label: string; value: Scope }[]>(() => {
   return avail.map((s) => ({
     value: s,
     label: s === 'year' ? 'Year' : 'Month',
+  }));
+});
+const modeOptionsComputed = computed(() => {
+  const avail = props.availableModes && props.availableModes.length ? props.availableModes : null;
+  const base = avail || (['all', 'online', 'offline'] as Mode[]);
+  return base.map((m) => ({
+    value: m,
+    label: m === 'all' ? 'All' : m === 'online' ? 'Online' : 'Offline',
   }));
 });
 
