@@ -78,9 +78,9 @@ const emit = defineEmits<{
 }>();
 
 const modeOptions: { label: string; value: Mode }[] = [
-  { label: 'All', value: 'all' },
-  { label: 'Online', value: 'online' },
-  { label: 'Offline', value: 'offline' },
+  { label: 'All', value: 'all' as Mode },
+  { label: 'Online', value: 'online' as Mode },
+  { label: 'Offline', value: 'offline' as Mode },
 ];
 const scopeOptions = computed<{ label: string; value: Scope }[]>(() => {
   const avail = props.availableScopes && props.availableScopes.length
@@ -94,7 +94,7 @@ const scopeOptions = computed<{ label: string; value: Scope }[]>(() => {
 const modeOptionsComputed = computed(() => {
   const avail = props.availableModes && props.availableModes.length ? props.availableModes : null;
   const base = avail || (['all', 'online', 'offline'] as Mode[]);
-  return base.map((m) => ({
+  return base.map((m: Mode) => ({
     value: m,
     label: m === 'all' ? 'All' : m === 'online' ? 'Online' : 'Offline',
   }));
