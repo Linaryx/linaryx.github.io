@@ -100,8 +100,8 @@ const formatHours = (count: number, minutes: number) => {
   z-index: 30;
 }
 .card {
-  background: #44555a; /* updated background */
-  border: 2px solid rgba(0,0,0,0.35);
+  background: var(--color-bg3); /* updated background */
+  border: 2px solid var(--color-border-strong);
   background-repeat: no-repeat;
   border-radius: 14px;
   padding: 1em;
@@ -113,14 +113,11 @@ const formatHours = (count: number, minutes: number) => {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(8px) brightness(2);
   transition: none !important;
 }
 .card:hover {
   transform: none !important;
-  /* preserve the original shadow on hover but prevent any lift */
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35) !important;
-  border-color: rgba(0,0,0,0.45) !important;
 }
 .head {
   display: flex;
@@ -138,7 +135,7 @@ const formatHours = (count: number, minutes: number) => {
   height: clamp(40px, 10vw, 48px);
   border-radius: 10px;
   object-fit: cover;
-  border: 2px solid rgba(0,0,0,0.5);
+  border: 2px solid var(--color-border-strong);
 }
 .title {
   margin: 0;
@@ -162,8 +159,8 @@ const formatHours = (count: number, minutes: number) => {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  background: #44555a; /* match card background */
-  border: 1px solid rgba(0,0,0,0.25);
+  background: var(--color-surface); /* match card background */
+  border: 1px solid var(--color-border-strong);
   border-radius: 10px;
   padding: 10px;
 }
