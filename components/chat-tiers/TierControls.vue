@@ -63,6 +63,7 @@ const props = defineProps<{
   mode: Mode;
   availableChannels?: string[];
   availableScopes?: Scope[];
+  availableModes?: Mode[];
   availableYears?: number[];
   availableMonths?: number[];
 }>();
