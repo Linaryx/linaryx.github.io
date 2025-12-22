@@ -142,7 +142,7 @@ table {
 th,
 td {
   padding: 8px 6px;
-  border-bottom: 1px solid #111827;
+  border-bottom: 1px solid var(--color-surface-soft);
   text-align: left;
 }
 th {
@@ -152,7 +152,8 @@ th {
   background: #0c0c0c;
 }
 tr:hover td {
-  background: rgba(124, 58, 237, 0.08);
+  /* Use brand accent color (rgba(84,129,138,0.08) == #54818a at 8% opacity) */
+  background: rgba(84, 129, 138, 0.08);
 }
 /* disable any translate lift on table rows */
 tr:hover, tr:hover td {

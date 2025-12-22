@@ -25,7 +25,8 @@
               <i class="pi pi-envelope" aria-hidden="true"></i>
               <span>contact@ruina.team</span>
             </a>
-            <a class="action" href="https://github.com/Linaryx/linaryx.github.io" target="_blank" rel="noopener noreferrer">
+            <a class="action" href="https://github.com/Linaryx/linaryx.github.io" target="_blank"
+              rel="noopener noreferrer">
               <i class="pi pi-github" aria-hidden="true"></i>
               <span>GitHub</span>
             </a>
@@ -55,8 +56,10 @@
 .hero {
   position: relative;
   width: 100%;
-  flex: 1 1 auto; /* grow to take remaining space */
-  min-height: 0; /* allow flex child to shrink if needed */
+  flex: 1 1 auto;
+  /* grow to take remaining space */
+  min-height: 0;
+  /* allow flex child to shrink if needed */
   margin: 0;
   border-radius: 0;
   overflow: hidden;
@@ -73,7 +76,9 @@
   background:
     linear-gradient(180deg, rgba(9, 9, 11, 0.01) 0%, rgba(9, 9, 11, 0.3) 100%),
     url("~/assets/img/ruines.webp") center bottom / min(1400px, 100%) no-repeat;
-  z-index: 0; /* sit behind the hero text */
+  animation: ruin-slide 2.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  z-index: 0;
+  /* sit behind the hero text */
 }
 
 .hero-inner {
@@ -93,8 +98,30 @@
   letter-spacing: -0.02em;
   color: #ffffff;
   text-align: center;
-  text-shadow: 0 0 24px rgba(255, 255, 255, 0.719);
-  transform: translateY(-100px);
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.719);
+  /* start slightly higher, then animate down to -100px on load */
+  transform: translateY(-150px);
+  animation: hero-slide 2.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes hero-slide {
+  from {
+    transform: translateY(-100px);
+  }
+
+  to {
+    transform: translateY(-80px);
+  }
+}
+
+@keyframes ruin-slide {
+  from {
+    transform: translateY(50px);
+  }
+
+  to {
+    transform: translateY(0px);
+  }
 }
 
 /* ===== MOBILE ===== */
@@ -113,7 +140,8 @@
   position: relative;
   z-index: 2;
   background: url("~/assets/img/bg.webp") center / cover no-repeat, #0b0b0e;
-  margin-top: auto; /* push footer to bottom when content is short */
+  margin-top: auto;
+  /* push footer to bottom when content is short */
 }
 
 .footer-card {

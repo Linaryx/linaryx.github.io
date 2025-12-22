@@ -23,7 +23,7 @@ const color = computed(() => {
 const borderStyle = computed(() => ({
   border: `1px solid ${color.value}`,
   padding: '4px 8px',
-  borderRadius: '5px',
+  borderRadius: '10px',
 }));
 
 const textStyle = computed(() => ({
