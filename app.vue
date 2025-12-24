@@ -14,7 +14,8 @@ const updateNavHeight = () => {
 };
 
 // app load state: keep the page hidden until browser "load" event fires
-const isLoaded = ref(false);
+// During SSR/prerender we want content rendered immediately, so default true on server.
+const isLoaded = ref(process.server);
 
 onMounted(() => {
   const el = navRef.value?.el;
