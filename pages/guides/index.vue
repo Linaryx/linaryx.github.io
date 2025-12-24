@@ -51,12 +51,7 @@ const cards = computed(() =>
     </header>
 
     <div v-if="cards.length" class="guides-list">
-      <NuxtLink
-        v-for="(guide, idx) in cards"
-        :key="guide.path"
-        :to="guide.path"
-        class="guide-row"
-      >
+      <NuxtLink v-for="(guide, idx) in cards" :key="guide.path" :to="guide.path" class="guide-row">
         <div class="guide-thumb">
           <img :src="guide.image" :alt="guide.title" loading="lazy" />
         </div>
@@ -78,12 +73,8 @@ const cards = computed(() =>
           </p>
 
           <div class="guide-tags" v-if="guide.tags.length">
-            <span
-              v-for="(tag, tagIdx) in guide.tags"
-              :key="`${guide.path}-${tag}-${tagIdx}`"
-              class="tag-pill"
-              :class="`tag-${(tagIdx % 3) + 1}`"
-            >
+            <span v-for="(tag, tagIdx) in guide.tags" :key="`${guide.path}-${tag}-${tagIdx}`" class="tag-pill"
+              :class="`tag-${(tagIdx % 3) + 1}`">
               {{ tag }}
             </span>
           </div>
@@ -110,7 +101,7 @@ const cards = computed(() =>
 .eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #7dd3fc;
+  color: var(--color-brand-accent-1);
   font-size: 12px;
   font-weight: 700;
   margin: 0 0 6px;
@@ -245,10 +236,13 @@ const cards = computed(() =>
   background: #e2e8f0;
 }
 
-.tag-1,.tag-2 ,.tag-3 {
-  background: linear-gradient(135deg, #54818a, #6098a3);
+.tag-1,
+.tag-2,
+.tag-3 {
+  background: var(--color-brand-accent-3);
   color: #ffffff;
 }
+
 .empty-state {
   margin-top: 24px;
   background: var(--color-bg3);

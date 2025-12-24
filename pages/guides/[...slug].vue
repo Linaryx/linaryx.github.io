@@ -44,6 +44,23 @@ const formatDate = (value?: string) => {
 };
 
 const tagColor = (index: number) => `tag-${(index % 3) + 1}`;
+
+const bodyRef = ref<HTMLElement | null>(null);
+const applyAnchorClasses = () => {
+  const el = bodyRef.value;
+  if (!el) return;
+  const headingAnchors = el.querySelectorAll<HTMLElement>('h1 a, h2 a, h3 a, h4 a, h5 a, h6 a');
+  headingAnchors.forEach((a) => a.classList.add('heading-anchor'));
+};
+
+onMounted(() => {
+  nextTick(applyAnchorClasses);
+});
+
+watch(
+  () => guide.value?._path,
+  () => nextTick(applyAnchorClasses)
+);
 </script>
 
 <template>
@@ -88,7 +105,7 @@ const tagColor = (index: number) => `tag-${(index % 3) + 1}`;
       </div>
     </header>
 
-    <section class="guide-body card">
+    <section class="guide-body card" ref="bodyRef">
       <ContentRenderer :value="guide" />
     </section>
 
@@ -155,7 +172,8 @@ const tagColor = (index: number) => `tag-${(index % 3) + 1}`;
 .eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #7dd3fc;
+  color: var(--color-brand-accent-3);
+;
   font-size: 12px;
   font-weight: 700;
   margin: 0;
@@ -229,7 +247,7 @@ const tagColor = (index: number) => `tag-${(index % 3) + 1}`;
 }
 
 .tag-1,.tag-2 ,.tag-3 {
-  background: linear-gradient(135deg, #54818a, #6098a3);
+  background: var(--color-brand-accent-3);
   color: #ffffff;
 }
 
@@ -264,6 +282,26 @@ const tagColor = (index: number) => `tag-${(index % 3) + 1}`;
   padding: 10px;
   overflow: auto;
 }
+
+.guide-body :deep(a) {
+  color: var(--color-text-1);
+}
+
+.guide-body :deep(a:not(.heading-anchor)) {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.guide-body :deep(a:not(.heading-anchor):hover),
+.guide-body :deep(a:not(.heading-anchor):focus-visible) {
+  color: var(--color-brand-accent-1);
+}
+
+.guide-body :deep(a.heading-anchor) {
+  text-decoration: none !important;
+  border: none !important;
+}
+
 
 .guide-body :deep(img) {
   max-width: 100%;
