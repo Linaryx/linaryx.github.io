@@ -79,6 +79,7 @@
 <script setup lang="ts">
 import type { TierEntry } from '~/types/tiers';
 import { normalizeColor, tierTextColor } from '~/constants/tiers';
+import { buildScoredEntry, windowMultipliers } from '~/lib/score';
 const wrapEl = ref<HTMLElement | null>(null);
 const sentinelEl = ref<HTMLElement | null>(null);
 
@@ -95,52 +96,14 @@ defineEmits<{
 
 defineExpose({ wrapEl, sentinelEl });
 
-const multipliers = {
-  '1m': 0.7,
-  '5m': 2,
-  '15m': 4,
-  '30m': 6,
-  '60m': 8,
-} as const;
-
-const timeScore = (row: TierEntry) =>
-  (row.windows1m || 0) * multipliers['1m'] +
-  (row.windows5m || 0) * multipliers['5m'] +
-  (row.windows15m || 0) * multipliers['15m'] +
-  (row.windows30m || 0) * multipliers['30m'] +
-  (row.windows60m || 0) * multipliers['60m'];
-
-const chatScore = (row: TierEntry) => {
-  if (!row.messages) return 0;
-  const uniqueness = row.messages ? row.uniqueMessages / row.messages : 0;
-  return Math.log(1 + row.messages) * (0.5 + 0.5 * uniqueness);
-};
-
-const ScorePlus = (row: TierEntry) => {
-  const timeMultiplier = 0.8;
-  const chatMultiplier = 0.2;
-  const time = timeScore(row);
-  const chat = chatScore(row);
-  return timeMultiplier * time + chatMultiplier * chat;
-};
-
-const formatPoints = (count: number, key: keyof typeof multipliers) => {
-  const points = (count || 0) * multipliers[key];
+const formatPoints = (count: number, key: keyof typeof windowMultipliers) => {
+  const points = (count || 0) * windowMultipliers[key];
   return points % 1 === 0 ? `${points}` : points.toFixed(0);
 };
 
 const scoredEntries = computed(() =>
   [...props.entries]
-    .map((row) => {
-      const score = ScorePlus(row);
-      return {
-        ...row,
-        score,
-        scoreRounded: score.toFixed(0),
-        timeScore: timeScore(row),
-        chatScore: chatScore(row),
-      };
-    })
+    .map(buildScoredEntry)
     .sort((a, b) => b.score - a.score)
 );
 

@@ -25,16 +25,20 @@
       </div>
 
       <div class="tiers" v-if="selectedEntry">
-        <TierChip label="1м" :tier="selectedEntry.tier1m" :hours="formatHours(selectedEntry.windows1m, 1)" :colors="tierColors" />
+        <!-- <TierChip label="1м" :tier="selectedEntry.tier1m" :hours="formatHours(selectedEntry.windows1m, 1)" :colors="tierColors" />
         <TierChip label="5м" :tier="selectedEntry.tier5m" :hours="formatHours(selectedEntry.windows5m, 5)" :colors="tierColors" />
         <TierChip label="15м" :tier="selectedEntry.tier15m" :hours="formatHours(selectedEntry.windows15m, 15)" :colors="tierColors" />
         <TierChip label="30м" :tier="selectedEntry.tier30m" :hours="formatHours(selectedEntry.windows30m, 30)" :colors="tierColors" />
-        <TierChip label="60м" :tier="selectedEntry.tier60m" :hours="formatHours(selectedEntry.windows60m, 60)" :colors="tierColors" />
+        <TierChip label="60м" :tier="selectedEntry.tier60m" :hours="formatHours(selectedEntry.windows60m, 60)" :colors="tierColors" /> -->
         <div class="metric score">
           <p class="label">Место в топе</p>
           <p class="value">
-            {{ selectedRank != null ? `#${selectedRank + 1}` : (selectedEntry?.rank != null ? `#${selectedEntry.rank + 1}` : '—') }}
+            {{ selectedRank != null ? `#${selectedRank + 1}` : (selectedEntry?.rank != null ? `#${selectedEntry.rank + 1}` : '-') }}
           </p>
+        </div>
+        <div class="metric score">
+          <p class="label">Очки мощи</p>
+          <p class="value">{{ powerPoints }}</p>
         </div>
       </div>
 
@@ -47,6 +51,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import TierChip from './TierChip.vue';
 import type { TierEntry } from '~/types/tiers';
 
@@ -75,12 +80,21 @@ const props = defineProps<{
 defineEmits<{ (e: 'close'): void }>();
 
 const metricItems = [
-  { label: 'Подписчики', value: props.userData.followers ?? '—' },
+  { label: 'Подписчики', value: props.userData.followers ?? '-' },
   { label: 'Создан', value: props.createdText },
   { label: 'Фоллов на канал', value: props.followText },
   { label: 'Подписка', value: props.subText },
   ...(props.roleText ? [{ label: 'Роль', value: props.roleText }] : []),
 ];
+
+type TierEntryWithScore = TierEntry & { score?: number; scoreRounded?: string };
+const powerPoints = computed(() => {
+  const entry = props.selectedEntry as TierEntryWithScore | null;
+  if (!entry) return '–';
+  if (entry.scoreRounded) return entry.scoreRounded;
+  if (typeof entry.score === 'number' && !Number.isNaN(entry.score)) return entry.score.toFixed(0);
+  return '–';
+});
 
 const formatHours = (count: number, minutes: number) => {
   const hours = (count * minutes) / 60;

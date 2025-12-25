@@ -7,6 +7,7 @@ import UserCard from '~/components/chat-tiers/UserCard.vue';
 import LoadingBar from '~/components/chat-tiers/LoadingBar.vue';
 import { useRoles } from '~/composables/useRoles';
 import { defaultTierColors, tierRanges } from '~/constants/tiers';
+import { buildScoredEntry } from '~/lib/score';
 import { fetchAvailableChannels, fetchAvailablePeriods, fetchTiersSupabase as fetchTiers } from '~/lib/api';
 import type { Mode, Scope, TierEntry, TierResponse } from '~/types/tiers';
 
@@ -418,14 +419,19 @@ const periodText = computed(() => {
   return [y, m].filter(Boolean).join('/');
 });
 
+const scoredEntries = computed(() => {
+  if (!data.value?.entries?.length) return [];
+  return [...data.value.entries].map(buildScoredEntry).sort((a, b) => b.score - a.score);
+});
+
 const selectedEntry = computed(() => {
-  if (!data.value || !userData.value) return null;
-  return data.value.entries.find((e: TierEntry) => e.userId === userData.value?.id) || null;
+  if (!userData.value) return null;
+  return scoredEntries.value.find((e) => e.userId === userData.value?.id) || null;
 });
 
 const selectedRank = computed(() => {
-  if (!data.value || !userData.value) return null;
-  const idx = data.value.entries.findIndex((e) => e.userId === userData.value?.id);
+  if (!userData.value) return null;
+  const idx = scoredEntries.value.findIndex((e) => e.userId === userData.value?.id);
   return idx >= 0 ? idx : null;
 });
 
