@@ -399,7 +399,7 @@ const handleScroll = () => {
 };
 
 onMounted(async () => {
-  await loadAvailable();
+  await reload();
   setupPrefetchObserver();
 });
 
