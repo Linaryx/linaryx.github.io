@@ -517,7 +517,7 @@ const errorText = computed(() => {
         :unique="data.totalUniqueMessages"
       />
 
-      <div class="tier-grid">
+      <!-- <div class="tier-grid">
         <div class="tier-group" v-for="idx in 5" :key="idx">
           <div class="tier-chip">
             <span class="chip-color" :style="{ background: tierColors[`HT${idx}`] }" />
@@ -534,7 +534,7 @@ const errorText = computed(() => {
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <TierTable
         ref="tableRef"
@@ -767,13 +767,15 @@ h1 {
 }
 
 .btn.primary.refresh-btn:hover {
+  background: var(--color-brand-accent-2);
+
   transform: none;
 }
 
 .btn.primary.refresh-btn:active {
   transform: none;
-  border-color: #065f46;
-  background: #059669;
+  border-color: #ffffff;
+  background: var(--color-brand-accent-bright);
   box-shadow: 0 6px 18px rgba(16, 185, 129, 0.12), 0 0 10px rgba(16, 185, 129, 0.3);
 }
 
