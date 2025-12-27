@@ -136,10 +136,13 @@ const fetchRelations = async (ids: string[]) => {
   }
 };
 
-const fetchUser = async () => {
+const fetchUser = async (opts?: { keepOpen?: boolean }) => {
+  const keepOpen = !!opts?.keepOpen;
   userError.value = null;
-  userData.value = null;
-  showProfile.value = false;
+  if (!keepOpen) {
+    userData.value = null;
+    showProfile.value = false;
+  }
   const term = userLookup.value.trim();
   if (!term) return;
   userLoading.value = true;
@@ -152,10 +155,11 @@ const fetchUser = async () => {
     if ((!res || !res.length) && !isId) {
       res = await $fetch<IvrUser[]>(`https://api.ivr.fi/v2/twitch/user?id=${encodeURIComponent(term)}`);
     }
-    userData.value = res?.[0] ?? null;
+    const fetched = res?.[0] ?? null;
+    userData.value = fetched;
     if (!res?.length) {
       userError.value = 'Not found';
-      showProfile.value = false;
+      if (!keepOpen) showProfile.value = false;
     } else {
       showProfile.value = true;
       const foundId = res[0]?.id;
@@ -207,7 +211,7 @@ const openProfile = async (userId: string) => {
   if (needsRelations) {
     await fetchRelations([userId]);
   }
-  await fetchUser();
+  await fetchUser({ keepOpen: true });
 };
 
 const data = ref<TierResponse | null>(null);
@@ -491,7 +495,7 @@ const errorText = computed(() => {
       <div class="lookup">
         <div class="lookup-row">
           <input v-model="userLookup" type="text" placeholder="login or id" />
-          <button class="btn primary" @click="fetchUser" :disabled="userLoading">
+          <button class="btn primary" @click="() => fetchUser()" :disabled="userLoading">
             {{ userLoading ? 'Загрузка...' : 'Поиск' }}
           </button>
         </div>

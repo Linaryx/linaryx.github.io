@@ -1,9 +1,10 @@
 <template>
   <div class="backdrop" @click.self="$emit('close')">
-    <div class="card">
+    <div class="card" :style="cardStyle">
       <header class="head">
         <div class="user">
-          <img v-if="userData.logo" :src="userData.logo" alt="" />
+          <img v-if="userData.logo" :src="userData.logo" alt="" ref="avatarEl" crossorigin="anonymous"
+            @load="onAvatarLoad" />
           <div>
             <p class="title">{{ displayName }}</p>
             <p class="muted mono">ID: {{ userData.id }}</p>
@@ -33,7 +34,8 @@
         <div class="metric score">
           <p class="label">Место в топе</p>
           <p class="value">
-            {{ selectedRank != null ? `#${selectedRank + 1}` : (selectedEntry?.rank != null ? `#${selectedEntry.rank + 1}` : '-') }}
+            {{ selectedRank != null ? `#${selectedRank + 1}` : (selectedEntry?.rank != null ? `#${selectedEntry.rank +
+              1}` : '-') }}
           </p>
         </div>
         <div class="metric score">
@@ -51,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import TierChip from './TierChip.vue';
 import type { TierEntry } from '~/types/tiers';
 
@@ -79,6 +81,12 @@ const props = defineProps<{
 
 defineEmits<{ (e: 'close'): void }>();
 
+const avatarEl = ref<HTMLImageElement | null>(null);
+const accentColor = ref<string | null>(null);
+const bgColor = ref<string | null>(null);
+const surfaceColor = ref<string | null>(null);
+const textColor = ref<string | null>(null);
+
 const metricItems = [
   { label: 'Подписчики', value: props.userData.followers ?? '-' },
   { label: 'Создан', value: props.createdText },
@@ -90,16 +98,133 @@ const metricItems = [
 type TierEntryWithScore = TierEntry & { score?: number; scoreRounded?: string };
 const powerPoints = computed(() => {
   const entry = props.selectedEntry as TierEntryWithScore | null;
-  if (!entry) return '–';
+  if (!entry) return '-';
   if (entry.scoreRounded) return entry.scoreRounded;
   if (typeof entry.score === 'number' && !Number.isNaN(entry.score)) return entry.score.toFixed(0);
   return '–';
+});
+
+const clamp = (val: number, min: number, max: number) => Math.min(max, Math.max(min, val));
+
+const rgbToHsl = (r: number, g: number, b: number) => {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0, l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  return { h, s, l };
+};
+
+const hslToRgb = (h: number, s: number, l: number) => {
+  const hue2rgb = (p: number, q: number, t: number) => {
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+  };
+  let r = l, g = l, b = l;
+  if (s !== 0) {
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1 / 3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1 / 3);
+  }
+  return {
+    r: Math.round(r * 255),
+    g: Math.round(g * 255),
+    b: Math.round(b * 255),
+  };
+};
+
+const adjustLightness = (rgb: [number, number, number], delta: number) => {
+  const { h, s, l } = rgbToHsl(rgb[0], rgb[1], rgb[2]);
+  const nextL = clamp(l + delta, 0, 1);
+  const { r, g, b } = hslToRgb(h, s, nextL);
+  return `rgb(${r}, ${g}, ${b})`;
+};
+
+const getTextColor = (rgb: [number, number, number]) => {
+  const [r, g, b] = rgb.map((c) => c / 255);
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return lum > 0.55 ? '#0b0b0b' : '#f5f5f5';
+};
+
+const extractAccent = async () => {
+  if (!avatarEl.value || !avatarEl.value.complete || !avatarEl.value.naturalWidth) return;
+  try {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const size = 8;
+    canvas.width = size;
+    canvas.height = size;
+    ctx.drawImage(avatarEl.value, 0, 0, size, size);
+    const data = ctx.getImageData(0, 0, size, size).data;
+    let r = 0, g = 0, b = 0, count = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      r += data[i];
+      g += data[i + 1];
+      b += data[i + 2];
+      count += 1;
+    }
+    if (count) {
+      const base: [number, number, number] = [
+        Math.round(r / count),
+        Math.round(g / count),
+        Math.round(b / count),
+      ];
+      accentColor.value = `rgb(${base[0]}, ${base[1]}, ${base[2]})`;
+      bgColor.value = adjustLightness(base, -0.1);
+      surfaceColor.value = adjustLightness(base, 0.08);
+      textColor.value = getTextColor(base);
+    }
+  } catch {
+    /* ignore failures, keep theme defaults */
+  }
+};
+
+const onAvatarLoad = () => {
+  extractAccent();
+};
+
+watch(
+  () => props.userData.logo,
+  () => {
+    accentColor.value = null;
+    nextTick(() => extractAccent());
+  }
+);
+
+onMounted(() => {
+  if (avatarEl.value?.complete) {
+    extractAccent();
+  }
 });
 
 const formatHours = (count: number, minutes: number) => {
   const hours = (count * minutes) / 60;
   return `${hours.toFixed(1)}h`;
 };
+
+const cardStyle = computed(() => ({
+  '--card-accent': accentColor.value || 'var(--theme-accent)',
+  '--card-bg': bgColor.value || 'var(--theme-bg-soft, var(--color-bg3))',
+  '--card-surface': surfaceColor.value || 'var(--theme-surface, var(--color-surface))',
+  '--card-text': textColor.value || 'var(--theme-text-main, #ffffff)',
+  backgroundColor: bgColor.value || 'var(--theme-bg-soft, var(--color-bg3))',
+  borderColor: accentColor.value || 'var(--theme-accent)',
+}));
 </script>
 
 <style scoped>
@@ -113,16 +238,18 @@ const formatHours = (count: number, minutes: number) => {
   padding: 20px;
   z-index: 30;
 }
+
 .card {
-  background: var(--color-bg3); /* updated background */
-  border: 2px solid var(--color-border-strong);
+  background: var(--card-bg);
+  border: 2px solid var(--card-accent);
   background-repeat: no-repeat;
   border-radius: 14px;
   padding: 1em;
   width: 100%;
   max-width: clamp(320px, 80vw, 440px);
-  color: #ffffff;
-  font-weight: 700; /* make primary text bold */
+  color: var(--card-text);
+  font-weight: 700;
+  /* make primary text bold */
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
@@ -130,76 +257,92 @@ const formatHours = (count: number, minutes: number) => {
   backdrop-filter: blur(8px) brightness(2);
   transition: none !important;
 }
+
 .card:hover {
   transform: none !important;
 }
+
 .head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
+
 .user {
   display: flex;
   gap: 10px;
   align-items: center;
 }
+
 .user img {
   width: clamp(40px, 10vw, 48px);
   height: clamp(40px, 10vw, 48px);
   border-radius: 10px;
   object-fit: cover;
-  border: 2px solid var(--color-border-strong);
+  border: 2px solid var(--card-accent);
 }
+
 .title {
   margin: 0;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--card-text);
 }
+
 .muted {
-  color: #ffffff;
+  color: var(--card-text);
   font-weight: 700;
   opacity: 0.95;
 }
+
 .mono {
   font-family: var(--font-base);
 }
+
 .metrics {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 10px 12px;
 }
+
 .metric {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  background: var(--color-surface); /* match card background */
-  border: 1px solid var(--color-border-strong);
+  background: var(--card-accent);
+  backdrop-filter: blur(0px) !important;
+  border: 3px solid var(--card-accent);
   border-radius: 10px;
   padding: 10px;
+  color: var(--card-text);
 }
+
 .label {
   margin: 0;
   font-size: 0.8em;
-  color: #ffffff;
+  color: var(--card-text);
   font-weight: 700;
 }
+
 .value {
   margin: 0;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--card-text);
 }
+
 .tiers {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 8px;
   align-items: stretch;
 }
+
 .metric.score {
   justify-content: center;
   min-height: 58px;
   width: 100%;
 }
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -210,20 +353,22 @@ const formatHours = (count: number, minutes: number) => {
   text-decoration: none;
   font-weight: 700;
   transition: all 0.15s ease;
-  border: 2px solid rgba(0,0,0,0.45);
-  background: #0a0a0a;
-  color: #fff;
+  border: 2px solid var(--card-accent);
+  background: var(--card-surface);
+  color: var(--card-text);
   box-shadow: none;
 }
-.btn.primary:hover {
-  border-color: #444;
-  background: var(--color-surface);
+
+.btn:hover {
+  border-color: var(--card-surface);
+  background-color: var(--card-accent);
   transform: none;
 }
-.btn.primary:active {
+
+.btn:active {
   transform: none;
-  border-color: #666;
-  background: var(--color-surface);
+  border: 2px solid var(--card-accent);
+  background: var(--card-surface);
 }
 
 /* Force any SVG inside the card (e.g., progress icons) to use white */
