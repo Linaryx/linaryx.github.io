@@ -34,8 +34,7 @@
         <div class="metric score">
           <p class="label">Место в топе</p>
           <p class="value">
-            {{ selectedRank != null ? `#${selectedRank + 1}` : (selectedEntry?.rank != null ? `#${selectedEntry.rank +
-              1}` : '-') }}
+            {{ selectedRank != null ? `#${selectedRank + 1}` : '-' }}
           </p>
         </div>
         <div class="metric score">
@@ -56,6 +55,7 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import TierChip from './TierChip.vue';
 import type { TierEntry } from '~/types/tiers';
+import { buildScoredEntry } from '~/lib/score';
 
 type User = {
   id: string;
@@ -95,13 +95,11 @@ const metricItems = [
   ...(props.roleText ? [{ label: 'Роль', value: props.roleText }] : []),
 ];
 
-type TierEntryWithScore = TierEntry & { score?: number; scoreRounded?: string };
 const powerPoints = computed(() => {
-  const entry = props.selectedEntry as TierEntryWithScore | null;
-  if (!entry) return '-';
-  if (entry.scoreRounded) return entry.scoreRounded;
-  if (typeof entry.score === 'number' && !Number.isNaN(entry.score)) return entry.score.toFixed(0);
-  return '–';
+  if (!props.selectedEntry) return '-';
+  const scored = buildScoredEntry(props.selectedEntry);
+  if (Number.isNaN(scored.score)) return '-';
+  return scored.scoreRounded;
 });
 
 const clamp = (val: number, min: number, max: number) => Math.min(max, Math.max(min, val));
