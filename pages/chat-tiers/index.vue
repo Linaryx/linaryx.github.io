@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch, onMounted, onBeforeUnmount } from 'vue';
+import { useRoute, useRouter } from '#imports';
 import TierControls from '~/components/chat-tiers/TierControls.vue';
 import TierSummary from '~/components/chat-tiers/TierSummary.vue';
 import TierTable from '~/components/chat-tiers/TierTable.vue';
@@ -54,6 +55,8 @@ let scrollEl: HTMLElement | null = null;
 let isPrefetching = false;
 
 const { loadRoles, avatarClasses } = useRoles();
+const route = useRoute();
+const router = useRouter();
 
 const plural = (n: number, forms: [string, string, string]) => {
   const abs = Math.abs(n) % 100;
@@ -223,6 +226,29 @@ const clearTimer = () => {
   }
 };
 
+const syncFromQuery = () => {
+  const q = route.query;
+  if (typeof q.channel === 'string' && q.channel.trim()) channel.value = q.channel.trim();
+  if (q.scope === 'year' || q.scope === 'month') scope.value = q.scope;
+  const y = Number(q.year);
+  if (Number.isFinite(y) && y > 2000) year.value = y;
+  const m = Number(q.month);
+  if (Number.isFinite(m) && m >= 1 && m <= 12) month.value = m;
+  if (q.mode === 'all' || q.mode === 'online' || q.mode === 'offline') mode.value = q.mode;
+};
+
+const pushQuery = () => {
+  router.replace({
+    query: {
+      channel: channel.value,
+      scope: scope.value,
+      year: String(year.value),
+      month: String(month.value),
+      mode: mode.value,
+    },
+  });
+};
+
 const alignToAvailable = () => {
   if (availableChannels.value.length && !availableChannels.value.includes(channel.value)) {
     channel.value = availableChannels.value[0];
@@ -326,17 +352,22 @@ const reload = async () => {
   await loadRoles(channel.value);
   await loadAvailable();
   await loadTiers();
+  pushQuery();
 };
 
 watch(
   () => [channel.value, year.value],
-  () => alignToAvailable()
+  () => {
+    alignToAvailable();
+    pushQuery();
+  }
 );
 
 watch(
   () => channel.value,
   async () => {
     await loadAvailable();
+    pushQuery();
   }
 );
 
@@ -349,6 +380,11 @@ watch(
     alignToAvailable();
   },
   { deep: true }
+);
+
+watch(
+  () => [scope.value, month.value, mode.value],
+  () => pushQuery()
 );
 
 const prefetchMoreProfiles = async () => {
@@ -399,6 +435,7 @@ const handleScroll = () => {
 };
 
 onMounted(async () => {
+  syncFromQuery();
   await loadAvailable();
   setupPrefetchObserver();
 });
