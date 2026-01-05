@@ -89,7 +89,7 @@ const textColor = ref<string | null>(null);
 
 const metricItems = [
   { label: 'Подписчики', value: props.userData.followers ?? '-' },
-  { label: 'Создан', value: props.createdText },
+  { label: 'Возраст аккаунта', value: props.createdText },
   { label: 'Фоллов на канал', value: props.followText },
   { label: 'Подписка', value: props.subText },
   ...(props.roleText ? [{ label: 'Роль', value: props.roleText }] : []),
