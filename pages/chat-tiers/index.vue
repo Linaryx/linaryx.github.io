@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch, onMounted, onBeforeUnmount } from 'vue';
+import { useRoute, useRouter } from '#imports';
 import TierControls from '~/components/chat-tiers/TierControls.vue';
 import TierSummary from '~/components/chat-tiers/TierSummary.vue';
 import TierTable from '~/components/chat-tiers/TierTable.vue';
@@ -7,7 +8,6 @@ import UserCard from '~/components/chat-tiers/UserCard.vue';
 import LoadingBar from '~/components/chat-tiers/LoadingBar.vue';
 import { useRoles } from '~/composables/useRoles';
 import { defaultTierColors, tierRanges } from '~/constants/tiers';
-import { buildScoredEntry } from '~/lib/score';
 import { fetchAvailableChannels, fetchAvailablePeriods, fetchTiersSupabase as fetchTiers } from '~/lib/api';
 import type { Mode, Scope, TierEntry, TierResponse } from '~/types/tiers';
 
@@ -55,6 +55,8 @@ let scrollEl: HTMLElement | null = null;
 let isPrefetching = false;
 
 const { loadRoles, avatarClasses } = useRoles();
+const route = useRoute();
+const router = useRouter();
 
 const plural = (n: number, forms: [string, string, string]) => {
   const abs = Math.abs(n) % 100;
@@ -136,13 +138,10 @@ const fetchRelations = async (ids: string[]) => {
   }
 };
 
-const fetchUser = async (opts?: { keepOpen?: boolean }) => {
-  const keepOpen = !!opts?.keepOpen;
+const fetchUser = async () => {
   userError.value = null;
-  if (!keepOpen) {
-    userData.value = null;
-    showProfile.value = false;
-  }
+  userData.value = null;
+  showProfile.value = false;
   const term = userLookup.value.trim();
   if (!term) return;
   userLoading.value = true;
@@ -155,11 +154,10 @@ const fetchUser = async (opts?: { keepOpen?: boolean }) => {
     if ((!res || !res.length) && !isId) {
       res = await $fetch<IvrUser[]>(`https://api.ivr.fi/v2/twitch/user?id=${encodeURIComponent(term)}`);
     }
-    const fetched = res?.[0] ?? null;
-    userData.value = fetched;
+    userData.value = res?.[0] ?? null;
     if (!res?.length) {
       userError.value = 'Not found';
-      if (!keepOpen) showProfile.value = false;
+      showProfile.value = false;
     } else {
       showProfile.value = true;
       const foundId = res[0]?.id;
@@ -211,7 +209,7 @@ const openProfile = async (userId: string) => {
   if (needsRelations) {
     await fetchRelations([userId]);
   }
-  await fetchUser({ keepOpen: true });
+  await fetchUser();
 };
 
 const data = ref<TierResponse | null>(null);
@@ -226,6 +224,29 @@ const clearTimer = () => {
     clearInterval(timer);
     timer = null;
   }
+};
+
+const syncFromQuery = () => {
+  const q = route.query;
+  if (typeof q.channel === 'string' && q.channel.trim()) channel.value = q.channel.trim();
+  if (q.scope === 'year' || q.scope === 'month') scope.value = q.scope;
+  const y = Number(q.year);
+  if (Number.isFinite(y) && y > 2000) year.value = y;
+  const m = Number(q.month);
+  if (Number.isFinite(m) && m >= 1 && m <= 12) month.value = m;
+  if (q.mode === 'all' || q.mode === 'online' || q.mode === 'offline') mode.value = q.mode;
+};
+
+const pushQuery = () => {
+  router.replace({
+    query: {
+      channel: channel.value,
+      scope: scope.value,
+      year: String(year.value),
+      month: String(month.value),
+      mode: mode.value,
+    },
+  });
 };
 
 const alignToAvailable = () => {
@@ -331,17 +352,22 @@ const reload = async () => {
   await loadRoles(channel.value);
   await loadAvailable();
   await loadTiers();
+  pushQuery();
 };
 
 watch(
   () => [channel.value, year.value],
-  () => alignToAvailable()
+  () => {
+    alignToAvailable();
+    pushQuery();
+  }
 );
 
 watch(
   () => channel.value,
   async () => {
     await loadAvailable();
+    pushQuery();
   }
 );
 
@@ -354,6 +380,11 @@ watch(
     alignToAvailable();
   },
   { deep: true }
+);
+
+watch(
+  () => [scope.value, month.value, mode.value],
+  () => pushQuery()
 );
 
 const prefetchMoreProfiles = async () => {
@@ -404,7 +435,8 @@ const handleScroll = () => {
 };
 
 onMounted(async () => {
-  await reload();
+  syncFromQuery();
+  await loadAvailable();
   setupPrefetchObserver();
 });
 
@@ -423,19 +455,14 @@ const periodText = computed(() => {
   return [y, m].filter(Boolean).join('/');
 });
 
-const scoredEntries = computed(() => {
-  if (!data.value?.entries?.length) return [];
-  return [...data.value.entries].map(buildScoredEntry).sort((a, b) => b.score - a.score);
-});
-
 const selectedEntry = computed(() => {
-  if (!userData.value) return null;
-  return scoredEntries.value.find((e) => e.userId === userData.value?.id) || null;
+  if (!data.value || !userData.value) return null;
+  return data.value.entries.find((e: TierEntry) => e.userId === userData.value?.id) || null;
 });
 
 const selectedRank = computed(() => {
-  if (!userData.value) return null;
-  const idx = scoredEntries.value.findIndex((e) => e.userId === userData.value?.id);
+  if (!data.value || !userData.value) return null;
+  const idx = data.value.entries.findIndex((e) => e.userId === userData.value?.id);
   return idx >= 0 ? idx : null;
 });
 
@@ -495,7 +522,7 @@ const errorText = computed(() => {
       <div class="lookup">
         <div class="lookup-row">
           <input v-model="userLookup" type="text" placeholder="login or id" />
-          <button class="btn primary" @click="() => fetchUser()" :disabled="userLoading">
+          <button class="btn primary" @click="fetchUser" :disabled="userLoading">
             {{ userLoading ? 'Загрузка...' : 'Поиск' }}
           </button>
         </div>
@@ -527,7 +554,7 @@ const errorText = computed(() => {
         :unique="data.totalUniqueMessages"
       />
 
-      <!-- <div class="tier-grid">
+      <div class="tier-grid">
         <div class="tier-group" v-for="idx in 5" :key="idx">
           <div class="tier-chip">
             <span class="chip-color" :style="{ background: tierColors[`HT${idx}`] }" />
@@ -544,7 +571,7 @@ const errorText = computed(() => {
             </div>
           </div>
         </div>
-      </div> -->
+      </div>
 
       <TierTable
         ref="tableRef"
@@ -777,15 +804,13 @@ h1 {
 }
 
 .btn.primary.refresh-btn:hover {
-  background: var(--color-brand-accent-2);
-
   transform: none;
 }
 
 .btn.primary.refresh-btn:active {
   transform: none;
-  border-color: #ffffff;
-  background: var(--color-brand-accent-bright);
+  border-color: #065f46;
+  background: #059669;
   box-shadow: 0 6px 18px rgba(16, 185, 129, 0.12), 0 0 10px rgba(16, 185, 129, 0.3);
 }
 
