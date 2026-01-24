@@ -115,12 +115,11 @@ body,
     height: 2em;
     display: inline-block;
     /* fill: red !important; */
-    background-image: url("/assets/img/svg/Favicon.png");
+    /* Use a public, stable URL so it works in both dev and static export. */
+    background-image: url("/favicon.svg");
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
-    /* -webkit-mask: url('/assets/img/svg/Favicon.svg') no-repeat center/contain;
-  mask: url('/assets/img/svg/Favicon.svg') no-repeat center/contain; */
     border-radius: 50%;
     flex-shrink: 0;
 }

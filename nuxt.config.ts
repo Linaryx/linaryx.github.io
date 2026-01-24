@@ -43,6 +43,7 @@ export default defineNuxtConfig({
       htmlAttrs: { style: "background:#000" },
       bodyAttrs: { style: "background:#000" },
       link: [
+        { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
         { rel: "preconnect", href: "https://fonts.googleapis.com" },
         {
           rel: "preconnect",

@@ -72,7 +72,7 @@ watch(
         <header class="guide-hero">
             <div class="hero-cover">
                 <img
-                    :src="guide.image_url || '/assets/img/svg/Favicon.png'"
+                    :src="guide.image_url || '/favicon.svg'"
                     :alt="guide.title"
                 />
             </div>

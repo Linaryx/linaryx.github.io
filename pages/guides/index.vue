@@ -31,7 +31,7 @@ const cards = computed(() =>
     description:
       item.description ||
       'Краткое описание гайда. Добавьте description во фронтматтер, чтобы перезаписать это значение.',
-    image: item.image_url || '/assets/img/svg/Favicon.png',
+    image: item.image_url || '/favicon.svg',
     updatedAt: item.updated_at || item.created_at,
     tags: Array.isArray(item.tags) ? item.tags : [],
   }))
