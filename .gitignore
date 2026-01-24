@@ -9,3 +9,4 @@ node_modules
 dist
 public/api-cache
 crash_report.txt
+.output_old_*

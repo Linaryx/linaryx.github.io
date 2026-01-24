@@ -8,22 +8,26 @@
   },
   "scripts": {
     "dev": "nuxt dev",
-    "build": "nuxt build",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "fetch:data": "bunx tsx scripts/fetch-data.ts",
-    "test:types": "bunx tsc --noEmit --skipLibCheck",
-    "test:build": "bun run generate",
-    "scan:roles": "bunx tsx scripts/scan-roles.ts"
+    "clean": "bun scripts/clean-output.ts",
+    "build": "bun run clean && nuxt generate",
+    "preview": "sirv dist/public -p 4173",
+    "preview:build": "bun run build && bun run preview",
+    "fetch:data": "bun scripts/fetch-data.ts",
+    "scan:roles": "bun scripts/scan-roles.ts",
+    "lint": "biome lint .",
+    "format": "biome format . --write",
+    "format:check": "biome format .",
+    "typecheck": "tsc --noEmit --skipLibCheck",
+    "test": "bun run lint && bun run typecheck && bun run build"
   },
   "dependencies": {
-    "@primeuix/themes": "^1.0.0",
-    "primeicons": "^7.0.0",
-    "primevue": "^4.5.1",
-    "@supabase/supabase-js": "^2.49.0"
+    "@supabase/supabase-js": "^2.91.1"
   },
   "devDependencies": {
-    "@nuxt/content": "^2.13.0",
-    "nuxt": "^3.13.0"
+    "@nuxt/content": "^2.13.4",
+    "@biomejs/biome": "^1.9.4",
+    "nuxt": "^3.21.0",
+    "sirv-cli": "^2.0.2",
+    "typescript": "^5.7.3"
   }
 }

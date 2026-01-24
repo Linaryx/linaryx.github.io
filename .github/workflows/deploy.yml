@@ -30,6 +30,12 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Lint
+        run: bun run lint
+
+      - name: Typecheck
+        run: bun run typecheck
+
       - name: Prefetch public data (tiers/roles)
         env:
           NUXT_PUBLIC_SUPABASE_URL: ${{ secrets.NUXT_PUBLIC_SUPABASE_URL }}
@@ -38,14 +44,12 @@ jobs:
         run: bun run fetch:data
 
       - name: Build static site
-        env:
-          NITRO_PRESET: github-pages
-        run: bun run generate
+        run: bun run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .output/public
+          path: dist/public
 
   deploy:
     needs: build

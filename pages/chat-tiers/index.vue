@@ -70,7 +70,7 @@ const plural = (n: number, forms: [string, string, string]) => {
 const humanizeFromDate = (iso?: string) => {
   if (!iso) return '-';
   const d = new Date(iso);
-  if (isNaN(d.getTime())) return '-';
+  if (Number.isNaN(d.getTime())) return '-';
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   const days = Math.max(0, Math.floor(diffMs / 86400000));
