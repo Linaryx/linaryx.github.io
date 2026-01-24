@@ -17,7 +17,7 @@
     "lint": "biome lint .",
     "format": "biome format . --write",
     "format:check": "biome format .",
-    "typecheck": "tsc --noEmit --skipLibCheck",
+    "typecheck": "nuxt prepare && tsc --noEmit --skipLibCheck",
     "test": "bun run lint && bun run typecheck && bun run build"
   },
   "dependencies": {
